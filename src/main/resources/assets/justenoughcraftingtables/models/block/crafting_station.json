@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "justenoughcraftingtables:block/station_side",
+    "down": "minecraft:block/oak_planks",
+    "up": "justenoughcraftingtables:block/station_top",
+    "north": "justenoughcraftingtables:block/station_front",
+    "south": "justenoughcraftingtables:block/station_side",
+    "west": "justenoughcraftingtables:block/station_side",
+    "east": "justenoughcraftingtables:block/station_side"
+  }
+}

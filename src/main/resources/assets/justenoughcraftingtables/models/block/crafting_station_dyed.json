@@ -1,0 +1,13 @@
+{
+  "parent": "justenoughcraftingtables:block/template_station_dyed",
+  "textures": {
+    "particle": "justenoughcraftingtables:block/station_side_wood",
+    "bottom_wood": "justenoughcraftingtables:block/station_bottom_wood",
+    "top_wood": "justenoughcraftingtables:block/station_top_wood",
+    "front_wood": "justenoughcraftingtables:block/station_front_wood",
+    "side_wood": "justenoughcraftingtables:block/station_side_wood",
+    "top_detail": "justenoughcraftingtables:block/station_top_detail",
+    "front_detail": "justenoughcraftingtables:block/station_front_detail",
+    "side_detail": "justenoughcraftingtables:block/station_side_detail"
+  }
+}

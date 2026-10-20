@@ -1,0 +1,16 @@
+{
+  "type": "justenoughcraftingtables:keep_colour_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "justenoughcraftingtables:crafting_station_slab"
+    },
+    {
+      "item": "justenoughcraftingtables:crafting_station_slab"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "justenoughcraftingtables:crafting_station"
+  }
+}

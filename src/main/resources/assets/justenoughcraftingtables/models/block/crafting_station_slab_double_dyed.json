@@ -1,0 +1,11 @@
+{
+  "parent": "justenoughcraftingtables:block/template_station_slab_double_dyed",
+  "textures": {
+    "particle": "justenoughcraftingtables:block/station_side_wood",
+    "bottom_wood": "justenoughcraftingtables:block/station_bottom_wood",
+    "top_wood": "justenoughcraftingtables:block/station_top_wood",
+    "side_wood": "justenoughcraftingtables:block/station_slab_side_wood",
+    "top_detail": "justenoughcraftingtables:block/station_top_detail",
+    "side_detail": "justenoughcraftingtables:block/station_slab_side_detail"
+  }
+}

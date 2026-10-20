@@ -1,0 +1,769 @@
+{
+  "variants": {
+    "color=black,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=black,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=black,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=black,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=black,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=black,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=black,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=black,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=black,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=black,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=black,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=black,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=blue,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=blue,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=blue,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=blue,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=blue,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=blue,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=blue,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=blue,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=blue,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=blue,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=blue,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=blue,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=brown,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=brown,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=brown,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=brown,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=brown,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=brown,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=brown,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=brown,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=brown,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=brown,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=brown,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=brown,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=cyan,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=cyan,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=cyan,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=cyan,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=cyan,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=cyan,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=cyan,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=cyan,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=cyan,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=cyan,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=cyan,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=cyan,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=gray,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=gray,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=gray,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=gray,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=gray,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=gray,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=gray,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=gray,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=gray,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=gray,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=gray,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=gray,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=green,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=green,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=green,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=green,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=green,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=green,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=green,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=green,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=green,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=green,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=green,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=green,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=light_blue,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=light_blue,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=light_blue,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=light_blue,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=light_blue,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=light_blue,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=light_blue,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=light_blue,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=light_blue,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=light_blue,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=light_blue,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=light_blue,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=light_gray,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=light_gray,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=light_gray,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=light_gray,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=light_gray,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=light_gray,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=light_gray,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=light_gray,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=light_gray,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=light_gray,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=light_gray,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=light_gray,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=lime,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=lime,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=lime,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=lime,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=lime,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=lime,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=lime,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=lime,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=lime,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=lime,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=lime,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=lime,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=magenta,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=magenta,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=magenta,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=magenta,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=magenta,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=magenta,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=magenta,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=magenta,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=magenta,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=magenta,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=magenta,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=magenta,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=none,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab",
+      "y": 90
+    },
+    "color=none,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double",
+      "y": 90
+    },
+    "color=none,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top",
+      "y": 90
+    },
+    "color=none,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab"
+    },
+    "color=none,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double"
+    },
+    "color=none,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top"
+    },
+    "color=none,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab",
+      "y": 180
+    },
+    "color=none,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double",
+      "y": 180
+    },
+    "color=none,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top",
+      "y": 180
+    },
+    "color=none,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab",
+      "y": 270
+    },
+    "color=none,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double",
+      "y": 270
+    },
+    "color=none,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top",
+      "y": 270
+    },
+    "color=orange,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=orange,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=orange,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=orange,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=orange,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=orange,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=orange,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=orange,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=orange,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=orange,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=orange,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=orange,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=pink,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=pink,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=pink,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=pink,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=pink,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=pink,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=pink,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=pink,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=pink,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=pink,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=pink,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=pink,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=purple,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=purple,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=purple,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=purple,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=purple,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=purple,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=purple,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=purple,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=purple,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=purple,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=purple,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=purple,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=red,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=red,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=red,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=red,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=red,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=red,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=red,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=red,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=red,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=red,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=red,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=red,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=white,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=white,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=white,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=white,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=white,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=white,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=white,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=white,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=white,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=white,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=white,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=white,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    },
+    "color=yellow,facing=east,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 90
+    },
+    "color=yellow,facing=east,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 90
+    },
+    "color=yellow,facing=east,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 90
+    },
+    "color=yellow,facing=north,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed"
+    },
+    "color=yellow,facing=north,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed"
+    },
+    "color=yellow,facing=north,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed"
+    },
+    "color=yellow,facing=south,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 180
+    },
+    "color=yellow,facing=south,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 180
+    },
+    "color=yellow,facing=south,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 180
+    },
+    "color=yellow,facing=west,type=bottom": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_dyed",
+      "y": 270
+    },
+    "color=yellow,facing=west,type=double": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_double_dyed",
+      "y": 270
+    },
+    "color=yellow,facing=west,type=top": {
+      "model": "justenoughcraftingtables:block/crafting_station_slab_top_dyed",
+      "y": 270
+    }
+  }
+}

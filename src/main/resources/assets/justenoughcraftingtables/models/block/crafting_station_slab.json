@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "particle": "justenoughcraftingtables:block/station_slab_side",
+    "bottom": "minecraft:block/oak_planks",
+    "top": "justenoughcraftingtables:block/station_top",
+    "side": "justenoughcraftingtables:block/station_slab_side"
+  }
+}

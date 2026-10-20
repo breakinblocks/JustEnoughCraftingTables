@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_crafting_station": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "justenoughcraftingtables:crafting_station"
+          }
+        ]
+      }
+    },
+    "has_crafting_station_slab": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "justenoughcraftingtables:crafting_station_slab"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "justenoughcraftingtables:crafting_station_from_slabs"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_crafting_station",
+      "has_crafting_station_slab"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "justenoughcraftingtables:crafting_station_from_slabs"
+    ]
+  }
+}
