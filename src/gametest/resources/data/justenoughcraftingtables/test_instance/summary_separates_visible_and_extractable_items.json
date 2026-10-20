@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "function": "justenoughcraftingtables:summary_separates_visible_and_extractable_items",
+  "environment": "justenoughcraftingtables:shared",
+  "structure": "justenoughcraftingtables:empty",
+  "max_ticks": 100
+}

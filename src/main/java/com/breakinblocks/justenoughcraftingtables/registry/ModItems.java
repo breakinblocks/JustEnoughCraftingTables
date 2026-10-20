@@ -2,7 +2,7 @@ package com.breakinblocks.justenoughcraftingtables.registry;
 
 import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import com.breakinblocks.justenoughcraftingtables.common.block.StationColor;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -10,13 +10,13 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-@EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID)
 public final class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(JustEnoughCraftingTables.MOD_ID);
 
     static {
-        ResourceLocation station = JustEnoughCraftingTables.id("crafting_station");
-        ResourceLocation slab = JustEnoughCraftingTables.id("crafting_station_slab");
+        Identifier station = JustEnoughCraftingTables.id("crafting_station");
+        Identifier slab = JustEnoughCraftingTables.id("crafting_station_slab");
         ITEMS.addAlias(ModAliases.legacy("crafting_station"), station);
         ITEMS.addAlias(ModAliases.legacy("crafting_station_slab"), slab);
     }

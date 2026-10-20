@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "function": "justenoughcraftingtables:fill_replay_cannot_create_client_templates",
+  "environment": "justenoughcraftingtables:shared",
+  "structure": "justenoughcraftingtables:empty",
+  "max_ticks": 100
+}

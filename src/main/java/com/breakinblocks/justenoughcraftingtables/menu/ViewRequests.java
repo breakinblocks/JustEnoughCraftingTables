@@ -1,7 +1,7 @@
 package com.breakinblocks.justenoughcraftingtables.menu;
 
 import com.breakinblocks.justenoughcraftingtables.net.ViewPayload;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 final class ViewRequests {
     record Pending(int id, int version, ViewPayload.Request request) {

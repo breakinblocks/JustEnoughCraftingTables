@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "function": "justenoughcraftingtables:single_slot_drag_goes_through_insert",
+  "environment": "justenoughcraftingtables:shared",
+  "structure": "justenoughcraftingtables:empty",
+  "max_ticks": 100
+}

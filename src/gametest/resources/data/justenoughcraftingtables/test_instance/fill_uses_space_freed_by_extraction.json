@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "function": "justenoughcraftingtables:fill_uses_space_freed_by_extraction",
+  "environment": "justenoughcraftingtables:shared",
+  "structure": "justenoughcraftingtables:empty",
+  "max_ticks": 100
+}

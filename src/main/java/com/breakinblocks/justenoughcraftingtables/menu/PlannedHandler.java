@@ -6,20 +6,19 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
 
 public final class PlannedHandler {
-    private final IItemHandler handler;
+    private final ItemStorage handler;
     private final Origin origin;
     private final Int2ObjectLinkedOpenHashMap<ItemStack> inserts = new Int2ObjectLinkedOpenHashMap<>();
     private final Int2IntLinkedOpenHashMap extracts = new Int2IntLinkedOpenHashMap();
 
-    public PlannedHandler(IItemHandler handler, Origin origin) {
+    public PlannedHandler(ItemStorage handler, Origin origin) {
         this.handler = handler;
         this.origin = origin;
     }
 
-    public IItemHandler handler() {
+    public ItemStorage handler() {
         return handler;
     }
 

@@ -13,9 +13,8 @@ public final class ModBlockEntities {
 
     @SuppressWarnings("DataFlowIssue")
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StationBlockEntity>> CRAFTING_STATION =
-            BLOCK_ENTITIES.register("crafting_station", () -> BlockEntityType.Builder.of(
-                            StationBlockEntity::new, ModBlocks.CRAFTING_STATION.get(), ModBlocks.CRAFTING_STATION_SLAB.get())
-                    .build(null));
+            BLOCK_ENTITIES.register("crafting_station", () -> new BlockEntityType<>(
+                            StationBlockEntity::new, ModBlocks.CRAFTING_STATION.get(), ModBlocks.CRAFTING_STATION_SLAB.get()));
 
     static {
         BLOCK_ENTITIES.addAlias(ModAliases.legacy("crafting_station"), CRAFTING_STATION.getId());

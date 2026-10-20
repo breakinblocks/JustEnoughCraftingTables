@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:function",
+  "function": "justenoughcraftingtables:throwing_returns_rollback_entire_fill",
+  "environment": "justenoughcraftingtables:shared",
+  "structure": "justenoughcraftingtables:empty",
+  "max_ticks": 100
+}

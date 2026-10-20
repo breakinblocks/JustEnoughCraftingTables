@@ -3,17 +3,16 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
 
 /** An incremental filter rebuild. The menu disables mapped slots until it has a complete result. */
 final class ViewScan {
-    private final IItemHandler handler;
+    private final ItemStorage handler;
     private final IntOpenHashSet wanted;
     private final IntArrayList matching = new IntArrayList();
     private final int length;
     private int cursor;
 
-    ViewScan(IItemHandler handler, int[] ids) {
+    ViewScan(ItemStorage handler, int[] ids) {
         this.handler = handler;
         wanted = new IntOpenHashSet(ids);
         length = handler.getSlots();

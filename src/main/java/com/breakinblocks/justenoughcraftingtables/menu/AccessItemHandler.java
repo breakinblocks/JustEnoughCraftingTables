@@ -2,21 +2,21 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 
 import java.util.function.BooleanSupplier;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
 
 /** Retained source references must recheck access at the point of each operation. */
-final class AccessItemHandler implements IItemHandler {
+final class AccessItemHandler implements ItemStorage {
     private static final int MAX_SLOTS = 1 << 20;
-    private final IItemHandler delegate;
+    private final ItemStorage delegate;
     private final BooleanSupplier allowed;
 
-    AccessItemHandler(IItemHandler delegate, BooleanSupplier allowed) {
+    AccessItemHandler(ItemStorage delegate, BooleanSupplier allowed) {
         this.delegate = delegate;
         this.allowed = allowed;
     }
 
-    IItemHandler identity() {
-        return delegate;
+    @Override
+    public Object identity() {
+        return delegate.identity();
     }
 
     @Override

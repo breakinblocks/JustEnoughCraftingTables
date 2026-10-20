@@ -7,13 +7,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ToIntFunction;
-import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import org.jspecify.annotations.Nullable;
 
 public final class StationOperations {
     public enum FillResult {
@@ -42,7 +39,7 @@ public final class StationOperations {
     }
 
     private static int returnTo(StationMenu menu, Origin origin, ItemStack stack) {
-        IItemHandler target;
+        ItemStorage target;
         if (origin.isPlayer()) {
             target = menu.playerInventoryHandler();
         } else {
@@ -51,7 +48,7 @@ public final class StationOperations {
         if (target == null) {
             return 0;
         }
-        ItemStack remainder = ItemHandlerHelper.insertItemStacked(target, stack, false);
+        ItemStack remainder = ItemStorage.insertItemStacked(target, stack, false);
         int accepted = stack.getCount() - remainder.getCount();
         if (accepted > 0 && origin.side() != null) {
             menu.markSideModified(origin.side());
@@ -80,7 +77,7 @@ public final class StationOperations {
             }
         }
         if (fallbackToPlayer && !remaining.isEmpty()) {
-            ItemStack remainder = ItemHandlerHelper.insertItemStacked(menu.playerInventoryHandler(), remaining, false);
+            ItemStack remainder = ItemStorage.insertItemStacked(menu.playerInventoryHandler(), remaining, false);
             int accepted = remaining.getCount() - remainder.getCount();
             if (accepted > 0) {
                 GridOrigins.removeOldest(kept, accepted);
@@ -254,7 +251,7 @@ public final class StationOperations {
                     }
                     int left = chunk.count();
                     if (!chunk.origin().isPlayer()) {
-                        IItemHandler side = menu.storeTarget(chunk.origin().side());
+                        ItemStorage side = menu.storeTarget(chunk.origin().side());
                         if (side != null) {
                             PlannedHandler planner = returnPlanners.computeIfAbsent(chunk.origin(), origin -> new PlannedHandler(side, origin));
                             int accepted = planner.planInsertStacked(chunk.key().stack(), left);
@@ -275,6 +272,17 @@ public final class StationOperations {
                 }
             }
 
+            for (PlannedHandler planner : returnPlanners.values()) {
+                if (!planner.executeInserts().isEmpty()) {
+                    return FillResult.NO_ROOM;
+                }
+                if (planner.origin().side() != null) {
+                    menu.markSideModified(planner.origin().side());
+                }
+            }
+            if (!playerReturns.executeInserts().isEmpty()) {
+                return FillResult.NO_ROOM;
+            }
             menu.beginGridBatch();
             try {
                 for (int slot = 0; slot < 9; slot++) {
@@ -283,21 +291,6 @@ public final class StationOperations {
                 }
                 transaction.commit();
                 station.gridChanged();
-                List<ItemStack> leftovers = new ArrayList<>();
-                for (PlannedHandler planner : returnPlanners.values()) {
-                    leftovers.addAll(planner.executeInserts());
-                    if (planner.origin().side() != null) {
-                        menu.markSideModified(planner.origin().side());
-                    }
-                }
-                leftovers.addAll(playerReturns.executeInserts());
-
-                ServerPlayer player = menu.serverPlayer();
-                for (ItemStack leftover : leftovers) {
-                    if (player != null) {
-                        player.getInventory().placeItemBackInInventory(leftover);
-                    }
-                }
             } finally {
                 menu.endGridBatch();
             }
@@ -346,7 +339,7 @@ public final class StationOperations {
         }
         for (Source source : sources) {
             PlannedHandler planner = new PlannedHandler(source.handler(), source.origin());
-            IItemHandler handler = source.handler();
+            ItemStorage handler = source.handler();
             int slots = handler.getSlots();
             for (int slot = 0; slot < slots && !need.isEmpty(); slot++) {
                 ItemStack stack = handler.getStackInSlot(slot);
@@ -390,7 +383,7 @@ public final class StationOperations {
         int[] hint = hints.get(key);
         for (int s = hint[0]; s < sources.size(); s++) {
             Source source = sources.get(s);
-            IItemHandler handler = source.handler();
+            ItemStorage handler = source.handler();
             int slots = handler.getSlots();
             for (int slot = s == hint[0] ? hint[1] : 0; slot < slots; slot++) {
                 ItemStack stack = handler.getStackInSlot(slot);

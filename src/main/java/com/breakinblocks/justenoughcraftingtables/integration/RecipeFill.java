@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.jspecify.annotations.Nullable;
 
 public final class RecipeFill {
     public static final int GRID_SIZE = 9;
@@ -217,6 +217,6 @@ public final class RecipeFill {
     }
 
     public static void send(StationMenu menu, List<ItemStack> templates, int sets) {
-        PacketDistributor.sendToServer(new FillRecipePayload(menu.containerId, templates, sets));
+        ClientPacketDistributor.sendToServer(new FillRecipePayload(menu.containerId, templates, sets));
     }
 }

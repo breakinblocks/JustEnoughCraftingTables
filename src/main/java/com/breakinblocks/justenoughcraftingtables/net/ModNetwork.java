@@ -2,16 +2,16 @@ package com.breakinblocks.justenoughcraftingtables.net;
 
 import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import com.breakinblocks.justenoughcraftingtables.menu.StationMenu;
-import javax.annotation.Nullable;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.jspecify.annotations.Nullable;
 
-@EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID)
 public final class ModNetwork {
     private ModNetwork() {
     }
@@ -51,7 +51,7 @@ public final class ModNetwork {
     private static void handleSides(SidesPayload payload, IPayloadContext context) {
         StationMenu menu = menu(context.player(), payload.containerId());
         if (menu != null) {
-            menu.applySides(payload, PacketDistributor::sendToServer);
+            menu.applySides(payload, ClientPacketDistributor::sendToServer);
         }
     }
 

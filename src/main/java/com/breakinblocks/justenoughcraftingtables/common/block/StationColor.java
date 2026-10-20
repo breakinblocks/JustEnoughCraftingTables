@@ -2,13 +2,13 @@ package com.breakinblocks.justenoughcraftingtables.common.block;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BlockItemStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import org.jspecify.annotations.Nullable;
 
 public enum StationColor implements StringRepresentable {
     NONE("none", null),

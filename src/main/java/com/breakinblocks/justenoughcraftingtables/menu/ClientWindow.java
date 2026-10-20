@@ -6,10 +6,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import org.jspecify.annotations.Nullable;
 
 public final class ClientWindow {
     public static final int SIZE = 54;
@@ -38,8 +37,7 @@ public final class ClientWindow {
     private int pendingRequestId;
     private int nextRequestId = 1;
 
-    @Nullable
-    private ViewPayload.Request pendingRequest;
+    private ViewPayload.@Nullable Request pendingRequest;
 
     @Nullable
     private Direction predictedSide;
@@ -83,7 +81,7 @@ public final class ClientWindow {
         return ((long) direction.get3DDataValue() << 32) | (index & 0xFFFFFFFFL);
     }
 
-    public IItemHandler handler() {
+    public ItemStorage handler() {
         return handler;
     }
 
@@ -141,8 +139,7 @@ public final class ClientWindow {
         return pending ? predictedFiltered : filtered;
     }
 
-    @Nullable
-    public ViewPayload.Request pendingRequest() {
+    public ViewPayload.@Nullable Request pendingRequest() {
         return pending ? pendingRequest : null;
     }
 
@@ -253,7 +250,7 @@ public final class ClientWindow {
         revision++;
     }
 
-    private final class Handler implements IItemHandler {
+    private final class Handler implements ItemStorage {
         @Override
         public int getSlots() {
             return SIZE;

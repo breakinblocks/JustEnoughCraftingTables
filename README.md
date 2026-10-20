@@ -60,7 +60,7 @@ If the chest an item came from has been removed, Store leaves that item in the g
 
 ### Recipe viewers
 
-With JEI or EMI installed, the recipe transfer button fills the station's grid using items from your inventory and from every connected inventory, including tabs you are not looking at and pages you have not scrolled to. Recipes you can make show up as craftable even when the ingredients are in a chest next to the station.
+With JEI installed, the recipe transfer button fills the station's grid using items from your inventory and from every connected inventory, including tabs you are not looking at and pages you have not scrolled to. Recipes you can make show up as craftable even when the ingredients are in a chest next to the station.
 
 This works even when the server does not have JEI installed.
 
@@ -110,9 +110,8 @@ Server owners have a few more options, such as how many slots fit on a page and 
 
 ## Works well with
 
-- **JEI** and **EMI**: recipe transfer straight from your storage
+- **JEI**: recipe transfer straight from your storage
 - **Crafting Tweaks**: its rotate, balance and clear buttons work on the station grid
-- **Polymorph**: choose between recipes that share the same ingredients
 - **Jade**: look at a station to see its colour and what is on its grid
 - **Mouse Tweaks**: its scroll and drag tricks work on the panel's slots
 

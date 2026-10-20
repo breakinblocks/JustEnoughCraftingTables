@@ -3,7 +3,7 @@ import org.slf4j.event.Level
 plugins {
     id 'java-library'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.140'
+    id 'net.neoforged.moddev' version '2.0.144'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -17,7 +17,7 @@ base {
     archivesName = project.archives_base_name
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 sourceSets {
     gametest {
@@ -28,11 +28,6 @@ sourceSets {
 
 neoForge {
     version = project.neo_version
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
 
     runs {
         configureEach {
@@ -58,8 +53,8 @@ neoForge {
             gameDirectory = project.file('runs/gametest')
         }
 
-        data {
-            data()
+        clientData {
+            clientData()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
     }
@@ -95,17 +90,6 @@ repositories {
     exclusiveContent {
         forRepository {
             maven {
-                name = 'TerraformersMC'
-                url = 'https://maven.terraformersmc.com/releases'
-            }
-        }
-        filter {
-            includeGroup 'dev.emi'
-        }
-    }
-    exclusiveContent {
-        forRepository {
-            maven {
                 name = 'Modrinth'
                 url = 'https://api.modrinth.com/maven'
             }
@@ -121,9 +105,7 @@ def withMod = { String name -> project.findProperty("with_${name}")?.toString()?
 dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
-    compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
     compileOnly "maven.modrinth:crafting-tweaks:${craftingtweaks_version}"
-    compileOnly "maven.modrinth:polymorph:${polymorph_version}"
     compileOnly "maven.modrinth:jade:${jade_version}"
 
     if (withMod('jei')) {
@@ -131,17 +113,9 @@ dependencies {
             transitive = false
         }
     }
-    if (withMod('emi')) {
-        localRuntime("dev.emi:emi-neoforge:${emi_version}") {
-            transitive = false
-        }
-    }
     if (withMod('craftingtweaks')) {
         localRuntime "maven.modrinth:crafting-tweaks:${craftingtweaks_version}"
         localRuntime "maven.modrinth:balm:${balm_version}"
-    }
-    if (withMod('polymorph')) {
-        localRuntime "maven.modrinth:polymorph:${polymorph_version}"
     }
     if (withMod('jade')) {
         localRuntime "maven.modrinth:jade:${jade_version}"
@@ -157,7 +131,6 @@ tasks.withType(ProcessResources).configureEach {
         mod_license: mod_license,
         mod_description: mod_description,
         mod_url: mod_url,
-        pack_format: pack_format,
         minecraft_version_range: minecraft_version_range,
         neo_version_range: neo_version_range,
         loader_version_range: loader_version_range
@@ -180,7 +153,6 @@ idea {
         downloadJavadoc = true
     }
 }
-
 
 tasks.named('jar', Jar).configure {
     from(rootProject.file('LICENSE.md'))

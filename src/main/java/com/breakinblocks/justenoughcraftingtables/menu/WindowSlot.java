@@ -1,11 +1,10 @@
 package com.breakinblocks.justenoughcraftingtables.menu;
 
 import java.util.Optional;
-import javax.annotation.Nullable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import org.jspecify.annotations.Nullable;
 
 public class WindowSlot extends Slot {
     private final StationMenu menu;
@@ -22,7 +21,7 @@ public class WindowSlot extends Slot {
     }
 
     @Nullable
-    public IItemHandler handler() {
+    public ItemStorage handler() {
         return menu.windowHandler();
     }
 
@@ -41,7 +40,7 @@ public class WindowSlot extends Slot {
 
     @Override
     public ItemStack getItem() {
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (handler == null || real < 0) {
             return ItemStack.EMPTY;
@@ -52,7 +51,7 @@ public class WindowSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (stack.isEmpty() || handler == null || real < 0 || !menu.allowInsert()) {
             return false;
@@ -66,7 +65,7 @@ public class WindowSlot extends Slot {
 
     @Override
     public boolean mayPickup(Player player) {
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (handler == null || real < 0 || handler.getStackInSlot(real).isEmpty()) {
             return false;
@@ -81,14 +80,14 @@ public class WindowSlot extends Slot {
 
     @Override
     public int getMaxStackSize() {
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         return handler == null || real < 0 ? 0 : handler.getSlotLimit(real);
     }
 
     @Override
     public int getMaxStackSize(ItemStack stack) {
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (handler == null || real < 0 || stack.isEmpty()) {
             return 0;
@@ -105,7 +104,7 @@ public class WindowSlot extends Slot {
 
     @Override
     public ItemStack remove(int amount) {
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (handler == null || real < 0 || amount <= 0) {
             return ItemStack.EMPTY;
@@ -136,7 +135,7 @@ public class WindowSlot extends Slot {
         if (stack.isEmpty() || !mayPlace(stack)) {
             return stack;
         }
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (handler == null || real < 0) {
             return stack;
@@ -159,7 +158,7 @@ public class WindowSlot extends Slot {
         if (!mayPickup(player)) {
             return Optional.empty();
         }
-        IItemHandler handler = handler();
+        ItemStorage handler = handler();
         int real = realIndex();
         if (handler == null || real < 0) {
             return Optional.empty();

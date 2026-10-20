@@ -1,6 +1,6 @@
 package com.breakinblocks.justenoughcraftingtables.registry;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class ModAliases {
     public static final String LEGACY_NAMESPACE = "craftingstation";
@@ -8,7 +8,7 @@ public final class ModAliases {
     private ModAliases() {
     }
 
-    public static ResourceLocation legacy(String path) {
-        return ResourceLocation.fromNamespaceAndPath(LEGACY_NAMESPACE, path);
+    public static Identifier legacy(String path) {
+        return Identifier.fromNamespaceAndPath(LEGACY_NAMESPACE, path);
     }
 }

@@ -2,28 +2,29 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 
 import java.util.List;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
-import net.neoforged.neoforge.items.wrapper.RangedWrapper;
+import net.neoforged.neoforge.transfer.CombinedResourceHandler;
+import net.neoforged.neoforge.transfer.RangedResourceHandler;
+import net.neoforged.neoforge.transfer.item.PlayerInventoryWrapper;
 
 public final class PlayerStorage {
-    private final RangedWrapper main;
-    private final RangedWrapper hotbar;
-    private final IItemHandler combined;
+    private final ItemStorage main;
+    private final ItemStorage hotbar;
+    private final ItemStorage combined;
 
     public PlayerStorage(Inventory inventory) {
-        InvWrapper wrapper = new InvWrapper(inventory);
-        main = new RangedWrapper(wrapper, 9, 36);
-        hotbar = new RangedWrapper(wrapper, 0, 9);
-        combined = new CombinedInvWrapper(main, hotbar);
+        PlayerInventoryWrapper wrapper = PlayerInventoryWrapper.of(inventory);
+        var mainSlots = RangedResourceHandler.of(wrapper, 9, 36);
+        var hotbarSlots = RangedResourceHandler.of(wrapper, 0, 9);
+        main = ItemStorage.of(mainSlots);
+        hotbar = ItemStorage.of(hotbarSlots);
+        combined = ItemStorage.of(new CombinedResourceHandler<>(mainSlots, hotbarSlots));
     }
 
     public List<Source> sources() {
         return List.of(new Source(Origin.PLAYER, main), new Source(Origin.PLAYER, hotbar));
     }
 
-    public IItemHandler handler() {
+    public ItemStorage handler() {
         return combined;
     }
 }

@@ -3,7 +3,7 @@ package com.breakinblocks.justenoughcraftingtables.client.gui;
 import java.util.Locale;
 import java.util.function.Predicate;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 
@@ -16,7 +16,7 @@ public final class SearchQuery {
         if (query.startsWith("@")) {
             String text = query.substring(1);
             return stack -> {
-                ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
+                Identifier key = BuiltInRegistries.ITEM.getKey(stack.getItem());
                 String namespace = key.getNamespace();
                 if (namespace.contains(text)) {
                     return true;
@@ -28,7 +28,7 @@ public final class SearchQuery {
         }
         if (query.startsWith("#")) {
             String text = query.substring(1);
-            return stack -> stack.getTags().anyMatch(tag -> tag.location().toString().contains(text));
+            return stack -> stack.typeHolder().tags().anyMatch(tag -> tag.location().toString().contains(text));
         }
         return stack -> stack.getHoverName().getString().toLowerCase(Locale.ROOT).contains(query);
     }

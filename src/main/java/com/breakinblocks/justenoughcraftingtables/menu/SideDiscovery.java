@@ -7,7 +7,6 @@ import com.breakinblocks.justenoughcraftingtables.config.JustEnoughCraftingTable
 import com.breakinblocks.justenoughcraftingtables.registry.ModTags;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -17,13 +16,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.IItemHandler;
+import org.jspecify.annotations.Nullable;
 
 public final class SideDiscovery {
     @FunctionalInterface
     public interface HandlerQuery {
         @Nullable
-        IItemHandler query(Direction direction, BlockPos pos, @Nullable Direction context);
+        ItemStorage query(Direction direction, BlockPos pos, @Nullable Direction context);
     }
 
     private SideDiscovery() {
@@ -57,7 +56,7 @@ public final class SideDiscovery {
             if (!StationAccess.allowed(player, stationPos, blockEntity)) {
                 continue;
             }
-            IItemHandler handler = query.query(direction, pos, accessContext(blockEntity, direction));
+            ItemStorage handler = query.query(direction, pos, accessContext(blockEntity, direction));
             if (handler == null || handler.getSlots() <= 0) {
                 continue;
             }
@@ -77,15 +76,15 @@ public final class SideDiscovery {
         return accepted;
     }
 
-    private static IItemHandler identity(IItemHandler handler) {
-        return handler instanceof AccessItemHandler guarded ? guarded.identity() : handler;
+    private static Object identity(ItemStorage handler) {
+        return handler.identity();
     }
 
     private static ItemStack icon(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
         ItemStack icon = ItemStack.EMPTY;
         try {
-            icon = state.getBlock().getCloneItemStack(level, pos, state);
+            icon = state.getCloneItemStack(level, pos, false);
         } catch (RuntimeException exception) {
             JustEnoughCraftingTables.LOGGER.debug("Pick-block item lookup failed at {}", pos, exception);
         }

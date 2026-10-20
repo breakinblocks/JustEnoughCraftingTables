@@ -1,16 +1,18 @@
 package com.breakinblocks.justenoughcraftingtables.client.gui;
 
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.Nullable;
 
 public class IconButton extends AbstractButton {
-    public record Sprites(ResourceLocation normal, ResourceLocation highlighted, @Nullable ResourceLocation disabled) {
+    public record Sprites(Identifier normal, Identifier highlighted, @Nullable Identifier disabled) {
     }
 
     private final Supplier<Sprites> sprites;
@@ -38,14 +40,14 @@ public class IconButton extends AbstractButton {
     }
 
     @Override
-    public void onPress() {
+    public void onPress(InputWithModifiers input) {
         action.run();
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         Sprites set = sprites.get();
-        ResourceLocation sprite;
+        Identifier sprite;
         if (!active && set.disabled() != null) {
             sprite = set.disabled();
         } else if (active && isHoveredOrFocused()) {
@@ -53,7 +55,7 @@ public class IconButton extends AbstractButton {
         } else {
             sprite = set.normal();
         }
-        guiGraphics.blitSprite(sprite, getX(), getY(), width, height);
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, getX(), getY(), width, height);
     }
 
     @Override

@@ -4,58 +4,78 @@ import com.breakinblocks.justenoughcraftingtables.common.block.StationBlock;
 import com.breakinblocks.justenoughcraftingtables.common.block.StationColor;
 import com.breakinblocks.justenoughcraftingtables.common.block.StationSlabBlock;
 import com.breakinblocks.justenoughcraftingtables.registry.ModRecipeSerializers;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import javax.annotation.Nullable;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.NonNullList;
+import java.util.List;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.NormalCraftingRecipe;
+import net.minecraft.world.item.crafting.PlacementInfo;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import org.jspecify.annotations.Nullable;
 
-public class KeepColourShapelessRecipe extends ShapelessRecipe {
-    private final String group;
-    private final CraftingBookCategory category;
-    private final ItemStack result;
-    private final NonNullList<Ingredient> ingredients;
+public class KeepColourShapelessRecipe extends NormalCraftingRecipe {
+    public static final MapCodec<KeepColourShapelessRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Recipe.CommonInfo.MAP_CODEC.forGetter(recipe -> recipe.commonInfo),
+            CraftingRecipe.CraftingBookInfo.MAP_CODEC.forGetter(recipe -> recipe.bookInfo),
+            ItemStackTemplate.CODEC.fieldOf("result").forGetter(recipe -> recipe.result),
+            Ingredient.CODEC.listOf(1, 9).fieldOf("ingredients").forGetter(recipe -> recipe.ingredients))
+            .apply(instance, KeepColourShapelessRecipe::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, KeepColourShapelessRecipe> STREAM_CODEC = StreamCodec.composite(
+            Recipe.CommonInfo.STREAM_CODEC, recipe -> recipe.commonInfo,
+            CraftingRecipe.CraftingBookInfo.STREAM_CODEC, recipe -> recipe.bookInfo,
+            ItemStackTemplate.STREAM_CODEC, recipe -> recipe.result,
+            Ingredient.CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list(9)), recipe -> recipe.ingredients,
+            KeepColourShapelessRecipe::new);
 
-    public KeepColourShapelessRecipe(String group, CraftingBookCategory category, ItemStack result, NonNullList<Ingredient> ingredients) {
-        super(group, category, result, ingredients);
-        this.group = group;
-        this.category = category;
+    private final ItemStackTemplate result;
+    private final List<Ingredient> ingredients;
+    private final ShapelessRecipe delegate;
+
+    public KeepColourShapelessRecipe(Recipe.CommonInfo commonInfo, CraftingRecipe.CraftingBookInfo bookInfo,
+            ItemStackTemplate result, List<Ingredient> ingredients) {
+        super(commonInfo, bookInfo);
         this.result = result;
-        this.ingredients = ingredients;
+        this.ingredients = List.copyOf(ingredients);
+        this.delegate = new ShapelessRecipe(commonInfo, bookInfo, result, this.ingredients);
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<KeepColourShapelessRecipe> getSerializer() {
         return ModRecipeSerializers.KEEP_COLOUR_SHAPELESS.get();
     }
 
     @Override
+    protected PlacementInfo createPlacementInfo() {
+        return delegate.placementInfo();
+    }
+
+    @Override
+    public List<RecipeDisplay> display() {
+        return delegate.display();
+    }
+
+    @Override
     public boolean matches(CraftingInput input, Level level) {
-        return super.matches(input, level) && commonColour(input) != null;
+        return delegate.matches(input, level) && commonColour(input) != null;
     }
 
     @Override
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+    public ItemStack assemble(CraftingInput input) {
         StationColor colour = commonColour(input);
-        ItemStack out = result.copy();
+        ItemStack out = result.create();
         return colour == null ? out : StationColor.apply(out, colour);
-    }
-
-    @Override
-    public boolean isSpecial() {
-        return false;
     }
 
     @Nullable
@@ -79,53 +99,4 @@ public class KeepColourShapelessRecipe extends ShapelessRecipe {
         return found == null ? StationColor.NONE : found;
     }
 
-    public static class Serializer implements RecipeSerializer<KeepColourShapelessRecipe> {
-        private static final MapCodec<KeepColourShapelessRecipe> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                        Codec.STRING.optionalFieldOf("group", "").forGetter(recipe -> recipe.group),
-                        CraftingBookCategory.CODEC.fieldOf("category").orElse(CraftingBookCategory.MISC).forGetter(recipe -> recipe.category),
-                        ItemStack.STRICT_CODEC.fieldOf("result").forGetter(recipe -> recipe.result),
-                        Ingredient.CODEC_NONEMPTY.listOf().fieldOf("ingredients").flatXmap(list -> {
-                            if (list.isEmpty()) {
-                                return DataResult.<NonNullList<Ingredient>>error(() -> "No ingredients for shapeless recipe");
-                            }
-                            if (list.size() > 9) {
-                                return DataResult.<NonNullList<Ingredient>>error(() -> "Too many ingredients for shapeless recipe. The maximum is: 9");
-                            }
-                            return DataResult.success(NonNullList.of(Ingredient.EMPTY, list.toArray(Ingredient[]::new)));
-                        }, DataResult::success).forGetter(recipe -> recipe.ingredients))
-                .apply(instance, KeepColourShapelessRecipe::new));
-
-        private static final StreamCodec<RegistryFriendlyByteBuf, KeepColourShapelessRecipe> STREAM_CODEC =
-                StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
-
-        @Override
-        public MapCodec<KeepColourShapelessRecipe> codec() {
-            return CODEC;
-        }
-
-        @Override
-        public StreamCodec<RegistryFriendlyByteBuf, KeepColourShapelessRecipe> streamCodec() {
-            return STREAM_CODEC;
-        }
-
-        private static KeepColourShapelessRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-            String group = buffer.readUtf();
-            CraftingBookCategory category = buffer.readEnum(CraftingBookCategory.class);
-            int size = buffer.readVarInt();
-            NonNullList<Ingredient> ingredients = NonNullList.withSize(size, Ingredient.EMPTY);
-            ingredients.replaceAll(ignored -> Ingredient.CONTENTS_STREAM_CODEC.decode(buffer));
-            ItemStack result = ItemStack.STREAM_CODEC.decode(buffer);
-            return new KeepColourShapelessRecipe(group, category, result, ingredients);
-        }
-
-        private static void toNetwork(RegistryFriendlyByteBuf buffer, KeepColourShapelessRecipe recipe) {
-            buffer.writeUtf(recipe.group);
-            buffer.writeEnum(recipe.category);
-            buffer.writeVarInt(recipe.ingredients.size());
-            for (Ingredient ingredient : recipe.ingredients) {
-                Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient);
-            }
-            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
-        }
-    }
 }

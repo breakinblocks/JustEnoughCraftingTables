@@ -11,21 +11,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.entity.player.Inventory;
@@ -35,6 +35,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.jspecify.annotations.Nullable;
 
 public class StationBlockEntity extends BlockEntity implements MenuProvider, Nameable {
     public static final String KEY_FORMAT = JustEnoughCraftingTables.MOD_ID + ":format";
@@ -213,88 +217,54 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         for (int i = 0; i < GRID_SIZE; i++) {
-            String key = KEY_SLOT + i;
-            if (tag.contains(key, Tag.TAG_COMPOUND)) {
-                grid.set(i, ItemStack.parseOptional(registries, tag.getCompound(key)));
-            } else {
-                grid.set(i, ItemStack.EMPTY);
-            }
+            grid.set(i, input.read(KEY_SLOT + i, ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY));
         }
-        selectedSide = null;
-        if (tag.contains(KEY_CURRENT_CONTAINER, Tag.TAG_ANY_NUMERIC)) {
-            int value = tag.getInt(KEY_CURRENT_CONTAINER);
-            if (value >= 0 && value < 6) {
-                selectedSide = Direction.from3DDataValue(value);
-            }
-        }
-        customName = null;
-        if (tag.contains(KEY_CUSTOM_NAME, Tag.TAG_STRING)) {
-            customName = parseCustomNameSafe(tag.getString(KEY_CUSTOM_NAME), registries);
-        }
+        int side = input.getIntOr(KEY_CURRENT_CONTAINER, -1);
+        selectedSide = side >= 0 && side < 6 ? Direction.from3DDataValue(side) : null;
+        customName = input.read(KEY_CUSTOM_NAME, LegacyNameCodec.CODEC).orElse(null);
         hidden.clear();
-        if (tag.contains(KEY_HIDDEN, Tag.TAG_ANY_NUMERIC)) {
-            int mask = tag.getInt(KEY_HIDDEN);
-            for (Direction direction : Direction.values()) {
-                if ((mask & (1 << direction.get3DDataValue())) != 0) {
-                    hidden.add(direction);
-                }
-            }
+        int mask = input.getByteOr(KEY_HIDDEN, (byte) 0);
+        for (Direction direction : Direction.values()) {
+            if ((mask & (1 << direction.get3DDataValue())) != 0) hidden.add(direction);
         }
-        if (tag.contains(KEY_ORIGINS, Tag.TAG_LIST)) {
-            origins.load(
-                    GridOrigins.CODEC
-                            .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get(KEY_ORIGINS))
-                            .resultOrPartial(error -> JustEnoughCraftingTables.LOGGER.warn("Could not read station grid origins at {}: {}", worldPosition, error))
-                            .orElse(List.of()),
-                    grid);
-        } else {
-            origins.load(List.of(), grid);
-        }
-        if (!tag.contains(KEY_FORMAT, Tag.TAG_ANY_NUMERIC)) {
-            LEGACY_LOADED.incrementAndGet();
-        }
+        origins.load(input.read(KEY_ORIGINS, GridOrigins.CODEC).orElse(List.of()), grid);
+        if (input.getInt(KEY_FORMAT).isEmpty()) LEGACY_LOADED.incrementAndGet();
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        writeGrid(tag, registries);
-        if (selectedSide != null) {
-            tag.putInt(KEY_CURRENT_CONTAINER, selectedSide.get3DDataValue());
-        }
-        if (customName != null) {
-            tag.putString(KEY_CUSTOM_NAME, Component.Serializer.toJson(customName, registries));
-        }
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        writeGrid(output);
+        if (selectedSide != null) output.putInt(KEY_CURRENT_CONTAINER, selectedSide.get3DDataValue());
+        output.storeNullable(KEY_CUSTOM_NAME, LegacyNameCodec.CODEC, customName);
         int mask = 0;
-        for (Direction direction : hidden) {
-            mask |= 1 << direction.get3DDataValue();
-        }
-        if (mask != 0) {
-            tag.putByte(KEY_HIDDEN, (byte) mask);
-        }
-        GridOrigins.CODEC
-                .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), origins.save())
-                .resultOrPartial(error -> JustEnoughCraftingTables.LOGGER.warn("Could not save station grid origins at {}: {}", worldPosition, error))
-                .ifPresent(encoded -> tag.put(KEY_ORIGINS, encoded));
-        tag.putInt(KEY_FORMAT, FORMAT);
+        for (Direction direction : hidden) mask |= 1 << direction.get3DDataValue();
+        if (mask != 0) output.putByte(KEY_HIDDEN, (byte) mask);
+        output.store(KEY_ORIGINS, GridOrigins.CODEC, origins.save());
+        output.putInt(KEY_FORMAT, FORMAT);
     }
 
-    private void writeGrid(CompoundTag tag, HolderLookup.Provider registries) {
+    private void writeGrid(ValueOutput output) {
         for (int i = 0; i < GRID_SIZE; i++) {
-            ItemStack stack = grid.get(i);
-            tag.put(KEY_SLOT + i, stack.isEmpty() ? new CompoundTag() : stack.save(registries));
+            output.store(KEY_SLOT + i, ItemStack.OPTIONAL_CODEC, grid.get(i));
         }
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = new CompoundTag();
-        writeGrid(tag, registries);
-        tag.putInt(KEY_FORMAT, FORMAT);
-        return tag;
+        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+        writeGrid(output);
+        output.putInt(KEY_FORMAT, FORMAT);
+        return output.buildResult();
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        if (level != null && !level.isClientSide()) Containers.dropContents(level, pos, takeGridForDrop());
+        super.preRemoveSideEffects(pos, state);
     }
 
     @Nullable
@@ -304,7 +274,7 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
     }
 
     @Override
-    protected void applyImplicitComponents(DataComponentInput componentInput) {
+    protected void applyImplicitComponents(DataComponentGetter componentInput) {
         super.applyImplicitComponents(componentInput);
         Component name = componentInput.get(DataComponents.CUSTOM_NAME);
         if (name != null) {
@@ -321,8 +291,8 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
 
     @Override
     @SuppressWarnings("deprecation")
-    public void removeComponentsFromTag(CompoundTag tag) {
-        super.removeComponentsFromTag(tag);
-        tag.remove(KEY_CUSTOM_NAME);
+    public void removeComponentsFromTag(ValueOutput output) {
+        super.removeComponentsFromTag(output);
+        output.discard(KEY_CUSTOM_NAME);
     }
 }

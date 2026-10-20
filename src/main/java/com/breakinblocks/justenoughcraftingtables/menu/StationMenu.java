@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -28,7 +27,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.Slot;
@@ -38,13 +37,16 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import org.jspecify.annotations.Nullable;
 
 public class StationMenu extends AbstractContainerMenu {
     public static final int RESULT_SLOT = 0;
@@ -101,8 +103,7 @@ public class StationMenu extends AbstractContainerMenu {
     private ItemStack accessKey = ItemStack.EMPTY;
     @Nullable
     private ViewScan viewScan;
-    @Nullable
-    private ViewRequests.Pending scanningRequest;
+    private ViewRequests.@Nullable Pending scanningRequest;
     private long lastScanTick = Long.MIN_VALUE;
     @Nullable
     private int[] serverFilter;
@@ -351,7 +352,7 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     @Nullable
-    public IItemHandler windowHandler() {
+    public ItemStorage windowHandler() {
         if (clientSide) {
             return clientWindow.handler();
         }
@@ -369,7 +370,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (clientSide) {
             return clientWindow.active(position) ? position : -1;
         }
-        IItemHandler handler = windowHandler();
+        ItemStorage handler = windowHandler();
         if (handler == null) {
             return -1;
         }
@@ -398,7 +399,7 @@ public class StationMenu extends AbstractContainerMenu {
             clientWindow.setStack(slot.position(), stack);
             return;
         }
-        IItemHandler handler = windowHandler();
+        ItemStorage handler = windowHandler();
         int real = windowIndex(slot.position());
         if (handler == null || real < 0) {
             refund(stack);
@@ -426,7 +427,7 @@ public class StationMenu extends AbstractContainerMenu {
         onWindowModified();
     }
 
-    private static void extractFully(IItemHandler handler, int slot, int amount) {
+    private static void extractFully(ItemStorage handler, int slot, int amount) {
         int left = amount;
         while (left > 0) {
             ItemStack extracted = handler.extractItem(slot, left, false);
@@ -503,20 +504,20 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     private final class CacheHolder {
-        private final BlockCapabilityCache<IItemHandler, Direction> cache;
+        private final BlockCapabilityCache<ResourceHandler<ItemResource>, Direction> cache;
 
         @Nullable
         private final Direction context;
 
         private boolean active = true;
-        private IItemHandler raw;
-        private IItemHandler guarded;
+        private ResourceHandler<ItemResource> raw;
+        private ItemStorage guarded;
         private boolean valid;
 
         private CacheHolder(ServerLevel serverLevel, Direction direction, BlockPos target, @Nullable Direction context) {
             this.context = context;
             this.cache = BlockCapabilityCache.create(
-                    Capabilities.ItemHandler.BLOCK, serverLevel, target, context, () -> active && !closed, () -> onCapabilityInvalidated(direction));
+                    Capabilities.Item.BLOCK, serverLevel, target, context, () -> active && !closed, () -> onCapabilityInvalidated(direction));
         }
     }
 
@@ -533,7 +534,7 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     @Nullable
-    private IItemHandler queryHandler(Direction direction, BlockPos target, @Nullable Direction context) {
+    private ItemStorage queryHandler(Direction direction, BlockPos target, @Nullable Direction context) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return null;
         }
@@ -546,13 +547,13 @@ public class StationMenu extends AbstractContainerMenu {
             holder = new CacheHolder(serverLevel, direction, target, context);
             caches[index] = holder;
         }
-        IItemHandler raw = holder.cache.getCapability();
+        ResourceHandler<ItemResource> raw = holder.cache.getCapability();
         holder.valid = true;
         if (raw != holder.raw) {
             holder.raw = raw;
             BlockEntity inventory = level.getBlockEntity(target);
             CacheHolder bound = holder;
-            holder.guarded = raw == null ? null : new AccessItemHandler(raw,
+            holder.guarded = raw == null ? null : new AccessItemHandler(ItemStorage.of(raw),
                     () -> bound.active && bound.valid && !closed && stillValid(player) && !station().isHidden(direction)
                             && level.getBlockEntity(target) == inventory && StationAccess.allowed(player, pos, inventory, true));
         }
@@ -627,6 +628,9 @@ public class StationMenu extends AbstractContainerMenu {
 
     @Override
     public void broadcastChanges() {
+        if (!clientSide && Transaction.getLifecycle() != Transaction.Lifecycle.NONE) {
+            return;
+        }
         if (!clientSide && !closed) {
             serverTick();
         }
@@ -647,7 +651,7 @@ public class StationMenu extends AbstractContainerMenu {
             accessKey = player.getMainHandItem().copy();
             runDiscovery(true);
         }
-        Collection<RecipeHolder<?>> currentRecipes = level.getRecipeManager().getRecipes();
+        Collection<RecipeHolder<?>> currentRecipes = ((ServerLevel) level).getServer().getRecipeManager().getRecipes();
         if (recipeSnapshot != currentRecipes) {
             recipeSnapshot = currentRecipes;
             lastRecipe = null;
@@ -687,7 +691,7 @@ public class StationMenu extends AbstractContainerMenu {
             send(new SidesPayload(containerId, sidesVersion, sides, Optional.ofNullable(view == null ? null : view.side()), false));
         }
         if (viewCountChanged) {
-            IItemHandler handler = windowHandler();
+            ItemStorage handler = windowHandler();
             view.setPosition(handler == null ? 0 : handler.getSlots(), view.page(), view.first());
             sendViewState(0);
         }
@@ -719,7 +723,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (view == null) {
             return;
         }
-        IItemHandler handler = windowHandler();
+        ItemStorage handler = windowHandler();
         int slots = handler == null ? 0 : handler.getSlots();
         int length = handler == null ? 0 : view.length(slots);
         int pages = ServerView.pages(length, pageSize);
@@ -845,9 +849,9 @@ public class StationMenu extends AbstractContainerMenu {
         }
         StationOperations.FillResult fillResult = StationOperations.fill(this, templates, sets);
         if (fillResult == StationOperations.FillResult.NOT_ENOUGH) {
-            player.displayClientMessage(Component.translatable("justenoughcraftingtables.fill.not_enough"), true);
+            player.sendOverlayMessage(Component.translatable("justenoughcraftingtables.fill.not_enough"));
         } else if (fillResult == StationOperations.FillResult.NO_ROOM) {
-            player.displayClientMessage(Component.translatable("justenoughcraftingtables.fill.no_room"), true);
+            player.sendOverlayMessage(Component.translatable("justenoughcraftingtables.fill.no_room"));
         }
         broadcastChanges();
     }
@@ -881,12 +885,12 @@ public class StationMenu extends AbstractContainerMenu {
         return out;
     }
 
-    public IItemHandler playerInventoryHandler() {
+    public ItemStorage playerInventoryHandler() {
         return playerStorage.handler();
     }
 
     @Nullable
-    public IItemHandler storeTarget(@Nullable Direction direction) {
+    public ItemStorage storeTarget(@Nullable Direction direction) {
         if (direction == null || !allowInsert) {
             return null;
         }
@@ -926,15 +930,15 @@ public class StationMenu extends AbstractContainerMenu {
             lastRecipe = holder;
         }
         boolean allowed = holder.value().isSpecial()
-                || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING)
-                || serverPlayer.getRecipeBook().contains(holder);
+                || !serverPlayer.level().getGameRules().get(GameRules.LIMITED_CRAFTING)
+                || serverPlayer.getRecipeBook().contains(holder.id());
         if (!allowed) {
             return ItemStack.EMPTY;
         }
         if (remember) {
             result.setRecipeUsed(holder);
         }
-        ItemStack assembled = holder.value().assemble(input, level.registryAccess());
+        ItemStack assembled = holder.value().assemble(input);
         return assembled.isItemEnabled(level.enabledFeatures()) ? assembled : ItemStack.EMPTY;
     }
 
@@ -964,10 +968,11 @@ public class StationMenu extends AbstractContainerMenu {
 
     public NonNullList<ItemStack> remainingItems(CraftingInput input) {
         RecipeHolder<CraftingRecipe> holder = lastRecipe;
-        if (holder != null && level.getRecipeManager().byKey(holder.id()).orElse(null) == holder && holder.value().matches(input, level)) {
+        if (holder != null && ((ServerLevel) level).getServer().getRecipeManager().byKey(holder.id()).orElse(null) == holder && holder.value().matches(input, level)) {
             return holder.value().getRemainingItems(input);
         }
-        return level.getRecipeManager().getRemainingItemsFor(RecipeType.CRAFTING, input, level);
+        return ((ServerLevel) level).getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level)
+                .map(recipe -> recipe.value().getRemainingItems(input)).orElseGet(() -> CraftingRecipe.defaultCraftingReminder(input));
     }
 
     @Override
@@ -984,7 +989,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (!StationBlocks.isStation(level.getBlockState(pos))) {
             return false;
         }
-        return player.canInteractWithBlock(pos, 4.0);
+        return player.isWithinBlockInteractionRange(pos, 4.0);
     }
 
     @Override
@@ -1015,7 +1020,7 @@ public class StationMenu extends AbstractContainerMenu {
             case BUTTON_STORE -> {
                 int leftover = StationOperations.store(this);
                 if (leftover > 0) {
-                    player.displayClientMessage(StationOperations.nowhereMessage(leftover), true);
+                    player.sendOverlayMessage(StationOperations.nowhereMessage(leftover));
                 }
             }
             case BUTTON_REPEAT_OFF -> repeatCraft = false;
@@ -1064,7 +1069,7 @@ public class StationMenu extends AbstractContainerMenu {
         return true;
     }
 
-    private boolean validClick(int slotId, int button, ClickType type) {
+    private boolean validClick(int slotId, int button, ContainerInput type) {
         if (slotId != -999 && slotId != -1 && (slotId < 0 || slotId >= slots.size())) {
             return false;
         }
@@ -1078,13 +1083,13 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+    public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
         if (!validClick(slotId, button, clickType)) {
             dragMode = -1;
             resetQuickCraft();
             return;
         }
-        if (clickType == ClickType.QUICK_CRAFT) {
+        if (clickType == ContainerInput.QUICK_CRAFT) {
             int phase = button & 3;
             int mode = button >> 2 & 3;
             if (phase == 0) {
@@ -1109,8 +1114,8 @@ public class StationMenu extends AbstractContainerMenu {
             return;
         }
         reconcileCursor();
-        if (slotId == RESULT_SLOT && clickType != ClickType.QUICK_CRAFT) {
-            if (clickType == ClickType.QUICK_MOVE && repeatCraft && (button == 0 || button == 1)) {
+        if (slotId == RESULT_SLOT && clickType != ContainerInput.QUICK_CRAFT) {
+            if (clickType == ContainerInput.QUICK_MOVE && repeatCraft && (button == 0 || button == 1)) {
                 repeatCraftClick(player);
             } else {
                 super.clicked(slotId, button, clickType, player);
@@ -1151,16 +1156,16 @@ public class StationMenu extends AbstractContainerMenu {
         }
     }
 
-    private boolean windowClick(int slotId, int button, ClickType clickType, Player player) {
+    private boolean windowClick(int slotId, int button, ContainerInput clickType, Player player) {
         if (slotId < WINDOW_START || slotId >= WINDOW_END) {
             return false;
         }
         WindowSlot slot = windowSlots[slotId - WINDOW_START];
-        if (clickType == ClickType.PICKUP && (button == 0 || button == 1)) {
+        if (clickType == ContainerInput.PICKUP && (button == 0 || button == 1)) {
             windowPickup(slot, button, player);
             return true;
         }
-        if (clickType == ClickType.SWAP && (button >= 0 && button < 9 || button == 40)) {
+        if (clickType == ContainerInput.SWAP && (button >= 0 && button < 9 || button == 40)) {
             windowSwap(slot, button, player);
             return true;
         }
@@ -1168,7 +1173,7 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     void windowPickup(WindowSlot slot, int button, Player player) {
-        IItemHandler handler = windowHandler();
+        ItemStorage handler = windowHandler();
         int real = slot.realIndex();
         if (handler == null || real < 0) {
             return;
@@ -1206,7 +1211,7 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     private void windowSwap(WindowSlot slot, int button, Player player) {
-        IItemHandler handler = windowHandler();
+        ItemStorage handler = windowHandler();
         int real = slot.realIndex();
         if (handler == null || real < 0) {
             return;
@@ -1319,7 +1324,7 @@ public class StationMenu extends AbstractContainerMenu {
         moved = stack.copy();
         if (index == RESULT_SLOT) {
             if (!clientSide) {
-                stack.getItem().onCraftedBy(stack, level, player);
+                stack.getItem().onCraftedBy(stack, player);
             }
             if (!moveItemStackTo(stack, INVENTORY_START, INVENTORY_END, true)) {
                 return ItemStack.EMPTY;
@@ -1356,7 +1361,7 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     private ItemStack windowQuickMove(WindowSlot slot) {
-        IItemHandler handler = windowHandler();
+        ItemStorage handler = windowHandler();
         int real = slot.realIndex();
         if (handler == null || real < 0) {
             return ItemStack.EMPTY;

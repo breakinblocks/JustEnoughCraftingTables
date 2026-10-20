@@ -1,11 +1,3 @@
 {
-  "parent": "justenoughcraftingtables:block/crafting_station_slab",
-  "overrides": [
-    {
-      "predicate": {
-        "justenoughcraftingtables:dyed": 1
-      },
-      "model": "justenoughcraftingtables:item/crafting_station_slab_dyed"
-    }
-  ]
+  "parent": "justenoughcraftingtables:block/crafting_station_slab"
 }

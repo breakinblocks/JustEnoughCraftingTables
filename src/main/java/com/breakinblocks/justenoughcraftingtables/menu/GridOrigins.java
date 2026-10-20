@@ -3,8 +3,8 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 import com.mojang.serialization.Codec;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 public final class GridOrigins {
     public static final int SIZE = 9;

@@ -1,6 +1,10 @@
 {
   "pack": {
-    "description": "JustEnoughCraftingTables resources",
-    "pack_format": 34
+    "description": "Just Enough Crafting Tables resources",
+    "min_format": 84,
+    "max_format": [
+      101,
+      1
+    ]
   }
 }

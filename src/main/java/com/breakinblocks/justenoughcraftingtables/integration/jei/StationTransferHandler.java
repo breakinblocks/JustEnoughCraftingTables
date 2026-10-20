@@ -12,25 +12,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.transfer.IRecipeTransferContext;
 import mezz.jei.api.recipe.transfer.IRecipeTransferError;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import mezz.jei.api.recipe.transfer.RecipeTransferResult;
+import mezz.jei.api.recipe.types.IRecipeType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
+import org.jspecify.annotations.Nullable;
 
 public class StationTransferHandler implements IRecipeTransferHandler<StationMenu, RecipeHolder<CraftingRecipe>> {
     private static final Component MISSING = Component.translatable("jei.tooltip.error.recipe.transfer.missing");
@@ -52,7 +52,7 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
     }
 
     @Override
-    public RecipeType<RecipeHolder<CraftingRecipe>> getRecipeType() {
+    public IRecipeType<RecipeHolder<CraftingRecipe>> getRecipeType() {
         return RecipeTypes.CRAFTING;
     }
 
@@ -84,7 +84,7 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
         if (inputs.size() > RecipeFill.GRID_SIZE) {
             return helper.createInternalError();
         }
-        Map<Integer, Ingredient> ingredients = ingredientMap(recipe, inputs);
+        Map<Integer, SlotDisplay> ingredients = ingredientMap(recipe, inputs);
         List<RecipeFill.Requirement> requirements = new ArrayList<>(RecipeFill.GRID_SIZE);
         for (int i = 0; i < inputs.size(); i++) {
             requirements.add(requirement(inputs.get(i), ingredients == null ? null : ingredients.get(i)));
@@ -108,8 +108,8 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
     }
 
     @Nullable
-    private Map<Integer, Ingredient> ingredientMap(RecipeHolder<CraftingRecipe> recipe, List<IRecipeSlotView> inputs) {
-        Map<Integer, Ingredient> map;
+    private Map<Integer, SlotDisplay> ingredientMap(RecipeHolder<CraftingRecipe> recipe, List<IRecipeSlotView> inputs) {
+        Map<Integer, SlotDisplay> map;
         try {
             map = helper.getGuiSlotIndexToIngredientMap(recipe);
         } catch (RuntimeException e) {
@@ -124,8 +124,7 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
         return map.keySet().equals(shown) ? map : null;
     }
 
-    @Nullable
-    private static RecipeFill.Requirement requirement(IRecipeSlotView view, @Nullable Ingredient ingredient) {
+    private static RecipeFill.@Nullable Requirement requirement(IRecipeSlotView view, @Nullable SlotDisplay display) {
         List<ItemStack> stacks = view.getItemStacks().filter(stack -> !stack.isEmpty()).toList();
         if (stacks.isEmpty()) {
             return null;
@@ -136,7 +135,28 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
             items.add(stack.getItem());
             exact.add(ItemKey.of(stack));
         }
-        Predicate<ItemStack> test = ingredient != null ? ingredient : stack -> exact.contains(ItemKey.view(stack));
+        Predicate<ItemStack> test = display == null ? null : predicate(display);
+        if (test == null) test = stack -> exact.contains(ItemKey.view(stack));
         return new RecipeFill.Requirement(items, test);
+    }
+
+    @Nullable
+    private static Predicate<ItemStack> predicate(SlotDisplay display) {
+        return switch (display) {
+            case SlotDisplay.ItemSlotDisplay item -> stack -> stack.is(item.item());
+            case SlotDisplay.TagSlotDisplay tag -> stack -> stack.is(tag.tag());
+            case SlotDisplay.ItemStackSlotDisplay item -> stack -> ItemStack.isSameItemSameComponents(stack, item.stack().create());
+            case SlotDisplay.WithRemainder remainder -> predicate(remainder.input());
+            case SlotDisplay.Composite composite -> {
+                List<Predicate<ItemStack>> predicates = new ArrayList<>();
+                for (SlotDisplay child : composite.contents()) {
+                    Predicate<ItemStack> predicate = predicate(child);
+                    if (predicate == null) yield null;
+                    predicates.add(predicate);
+                }
+                yield stack -> predicates.stream().anyMatch(predicate -> predicate.test(stack));
+            }
+            default -> null;
+        };
     }
 }

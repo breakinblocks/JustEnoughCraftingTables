@@ -1,9 +1,9 @@
 package com.breakinblocks.justenoughcraftingtables.menu;
 
 import com.mojang.serialization.Codec;
-import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.Nullable;
 
 public enum Origin implements StringRepresentable {
     DOWN("down", Direction.DOWN),

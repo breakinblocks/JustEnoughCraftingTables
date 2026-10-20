@@ -49,7 +49,7 @@ public final class DyeingEvents {
                 stack.shrink(1);
             }
         }
-        event.setCancellationResult(InteractionResult.sidedSuccess(level.isClientSide()));
+        event.setCancellationResult(InteractionResult.SUCCESS);
         event.setCanceled(true);
     }
 }

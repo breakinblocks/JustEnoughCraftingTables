@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "justenoughcraftingtables:dyed",
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "justenoughcraftingtables:item/crafting_station_slab_dyed",
+      "tints": [
+        {
+          "type": "justenoughcraftingtables:station"
+        }
+      ]
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "justenoughcraftingtables:item/crafting_station_slab"
+    }
+  }
+}

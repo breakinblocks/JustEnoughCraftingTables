@@ -21,6 +21,6 @@ public class StationGridProvider implements CraftingGridProvider {
 
     @Override
     public void buildCraftingGrids(CraftingGridBuilder builder, AbstractContainerMenu menu) {
-        builder.addGrid(StationMenu.GRID_START, GRID_SIZE);
+        builder.addGrid(StationMenu.GRID_START, 3, 3);
     }
 }

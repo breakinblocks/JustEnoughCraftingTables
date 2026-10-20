@@ -6,79 +6,87 @@ import com.breakinblocks.justenoughcraftingtables.config.JustEnoughCraftingTable
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
-public class StationRenderer implements BlockEntityRenderer<StationBlockEntity> {
+public final class StationRenderer implements BlockEntityRenderer<StationBlockEntity, StationRenderer.State> {
     private static final float CELL = 3.0F / 16.0F;
-    private final ItemRenderer itemRenderer;
+    private final ItemModelResolver itemModels;
+
+    public static final class State extends BlockEntityRenderState {
+        final ItemStackRenderState[] items = new ItemStackRenderState[StationBlockEntity.GRID_SIZE];
+        Direction facing = Direction.NORTH;
+        float surface;
+        boolean visible;
+
+        State() {
+            for (int i = 0; i < items.length; i++) items[i] = new ItemStackRenderState();
+        }
+    }
 
     public StationRenderer(BlockEntityRendererProvider.Context context) {
-        this.itemRenderer = context.getItemRenderer();
+        itemModels = context.itemModelResolver();
     }
 
     @Override
-    public void render(StationBlockEntity station, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!JustEnoughCraftingTablesConfig.CLIENT.renderGridItems.get()) {
-            return;
+    public State createRenderState() {
+        return new State();
+    }
+
+    @Override
+    public void extractRenderState(StationBlockEntity station, State state, float partialTick, Vec3 cameraPosition,
+            ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+        BlockEntityRenderer.super.extractRenderState(station, state, partialTick, cameraPosition, breakProgress);
+        for (ItemStackRenderState item : state.items) item.clear();
+        state.visible = JustEnoughCraftingTablesConfig.CLIENT.renderGridItems.get() && station.getLevel() != null && !station.isGridEmpty();
+        if (!state.visible) return;
+        BlockState blockState = station.getBlockState();
+        state.facing = blockState.getValue(BlockStateProperties.HORIZONTAL_FACING);
+        state.surface = 1.0F;
+        if (blockState.getBlock() instanceof StationSlabBlock) {
+            state.facing = state.facing.getOpposite();
+            if (blockState.getValue(BlockStateProperties.SLAB_TYPE) == SlabType.BOTTOM) state.surface = 0.5F;
         }
-        Level level = station.getLevel();
-        if (level == null || station.isGridEmpty()) {
-            return;
+        state.lightCoords = LevelRenderer.getLightCoords(station.getLevel(), station.getBlockPos().above());
+        int seed = (int) station.getBlockPos().asLong();
+        for (int slot = 0; slot < state.items.length; slot++) {
+            itemModels.updateForTopItem(state.items[slot], station.getGridItem(slot), ItemDisplayContext.FIXED, station.getLevel(), null, seed + slot);
         }
-        BlockState state = station.getBlockState();
-        if (!state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-            return;
-        }
-        Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-        float surface = 1.0F;
-        if (state.getBlock() instanceof StationSlabBlock) {
-            facing = facing.getOpposite();
-            if (state.getValue(BlockStateProperties.SLAB_TYPE) == SlabType.BOTTOM) {
-                surface = 0.5F;
-            }
-        }
-        int light = LevelRenderer.getLightColor(level, station.getBlockPos().above());
-        int seedBase = (int) station.getBlockPos().asLong();
-        poseStack.pushPose();
-        poseStack.translate(0.5F, surface, 0.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
-        for (int slot = 0; slot < StationBlockEntity.GRID_SIZE; slot++) {
-            ItemStack stack = station.getGridItem(slot);
-            if (stack.isEmpty()) {
-                continue;
-            }
-            int col = slot % 3;
-            int row = slot / 3;
-            int seed = seedBase + slot;
-            BakedModel model = itemRenderer.getModel(stack, level, null, seed);
-            boolean block = model.isGui3d();
+    }
+
+    @Override
+    public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        if (!state.visible) return;
+        pose.pushPose();
+        pose.translate(0.5F, state.surface, 0.5F);
+        pose.mulPose(Axis.YP.rotationDegrees(-state.facing.toYRot()));
+        for (int slot = 0; slot < state.items.length; slot++) {
+            ItemStackRenderState item = state.items[slot];
+            if (item.isEmpty()) continue;
+            boolean block = item.usesBlockLight();
             float scale = block ? 0.25F : 0.175F;
-            float lift = block ? 1.0F / 16.0F : 0.005F;
-            poseStack.pushPose();
-            poseStack.translate((col - 1) * CELL, lift, (row - 1) * CELL);
-            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.scale(scale, scale, scale);
-            itemRenderer.render(stack, ItemDisplayContext.FIXED, false, poseStack, buffer, light, OverlayTexture.NO_OVERLAY, model);
-            poseStack.popPose();
+            pose.pushPose();
+            pose.translate((slot % 3 - 1) * CELL, block ? 1.0F / 16.0F : 0.005F, (slot / 3 - 1) * CELL);
+            pose.mulPose(Axis.XP.rotationDegrees(-90.0F));
+            pose.mulPose(Axis.YP.rotationDegrees(180.0F));
+            pose.scale(scale, scale, scale);
+            item.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+            pose.popPose();
         }
-        poseStack.popPose();
-    }
-
-    @Override
-    public boolean shouldRenderOffScreen(StationBlockEntity blockEntity) {
-        return false;
+        pose.popPose();
     }
 }

@@ -11,8 +11,8 @@ public final class ModRecipeSerializers {
     public static final DeferredRegister<RecipeSerializer<?>> SERIALIZERS =
             DeferredRegister.create(Registries.RECIPE_SERIALIZER, JustEnoughCraftingTables.MOD_ID);
 
-    public static final DeferredHolder<RecipeSerializer<?>, KeepColourShapelessRecipe.Serializer> KEEP_COLOUR_SHAPELESS =
-            SERIALIZERS.register("keep_colour_shapeless", KeepColourShapelessRecipe.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<KeepColourShapelessRecipe>> KEEP_COLOUR_SHAPELESS =
+            SERIALIZERS.register("keep_colour_shapeless", () -> new RecipeSerializer<>(KeepColourShapelessRecipe.MAP_CODEC, KeepColourShapelessRecipe.STREAM_CODEC));
 
     private ModRecipeSerializers() {
     }

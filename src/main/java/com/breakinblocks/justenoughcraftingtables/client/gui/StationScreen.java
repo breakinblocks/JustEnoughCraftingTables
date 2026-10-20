@@ -14,32 +14,36 @@ import com.breakinblocks.justenoughcraftingtables.menu.WindowSlot;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
-import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 public class StationScreen extends AbstractContainerScreen<StationMenu> implements SideTabButton.Owner {
-    private static final ResourceLocation BACKGROUND = ResourceLocation.withDefaultNamespace("textures/gui/container/crafting_table.png");
-    private static final ResourceLocation PANEL = JustEnoughCraftingTables.id("panel");
-    private static final ResourceLocation PANEL_TALL = JustEnoughCraftingTables.id("panel_tall");
-    private static final ResourceLocation SLOT = JustEnoughCraftingTables.id("slot");
-    private static final ResourceLocation SCROLLBAR_TRACK = JustEnoughCraftingTables.id("scrollbar_track");
-    private static final ResourceLocation SCROLLER = ResourceLocation.withDefaultNamespace("container/creative_inventory/scroller");
+    private static final Identifier BACKGROUND = Identifier.withDefaultNamespace("textures/gui/container/crafting_table.png");
+    private static final Identifier PANEL = JustEnoughCraftingTables.id("panel");
+    private static final Identifier PANEL_TALL = JustEnoughCraftingTables.id("panel_tall");
+    private static final Identifier SLOT = JustEnoughCraftingTables.id("slot");
+    private static final Identifier SCROLLBAR_TRACK = JustEnoughCraftingTables.id("scrollbar_track");
+    private static final Identifier SCROLLER = Identifier.withDefaultNamespace("container/creative_inventory/scroller");
     private static final IconButton.Sprites STORE = sprites("store", true);
     private static final IconButton.Sprites CLEAR = sprites("clear", true);
     private static final IconButton.Sprites ORDER_PLAYER = sprites("order_player", false);
@@ -104,8 +108,6 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
 
     public StationScreen(StationMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        imageWidth = 176;
-        imageHeight = 166;
         titleLabelX = 8;
         titleLabelY = 6;
         inventoryLabelX = 8;
@@ -468,7 +470,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     }
 
     private void request(@Nullable Direction side, int page, int first, boolean rebuild) {
-        menu.requestView(side, page, first, filterIds, rebuild, PacketDistributor::sendToServer);
+        menu.requestView(side, page, first, filterIds, rebuild, ClientPacketDistributor::sendToServer);
     }
 
     @Override
@@ -605,7 +607,10 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (button == 0 && scrollbarShown() && inTrack(mouseX, mouseY)) {
             draggingScroll = true;
             scrollTo(mouseY);
@@ -614,31 +619,31 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
         if (search != null && search.visible && !search.isMouseOver(mouseX, mouseY) && search.isFocused()) {
             search.setFocused(false);
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
         if (draggingScroll) {
-            scrollTo(mouseY);
+            scrollTo(event.y());
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (draggingScroll && button == 0) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (draggingScroll && event.button() == 0) {
             draggingScroll = false;
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (panelShown() && window().displaySide() != null && scrollY != 0) {
-            if (hasShiftDown() && overPanel(mouseX, mouseY)) {
+            if (minecraft.hasShiftDown() && overPanel(mouseX, mouseY)) {
                 changePage(scrollY > 0 ? -1 : 1);
                 return true;
             }
@@ -659,9 +664,10 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
         if (search != null && search.visible) {
-            if (keyCode == GLFW.GLFW_KEY_F && hasControlDown() && !hasShiftDown() && !hasAltDown()) {
+            if (keyCode == GLFW.GLFW_KEY_F && minecraft.hasControlDown() && !minecraft.hasShiftDown() && !minecraft.hasAltDown()) {
                 setFocused(search);
                 search.setFocused(true);
                 return true;
@@ -674,13 +680,13 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
                         return true;
                     }
                     search.setFocused(false);
-                    return super.keyPressed(keyCode, scanCode, modifiers);
+                    return super.keyPressed(event);
                 }
                 if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
                     applyQuery();
                     return true;
                 }
-                if (search.keyPressed(keyCode, scanCode, modifiers)) {
+                if (search.keyPressed(event)) {
                     return true;
                 }
                 if (search.canConsumeInput()) {
@@ -710,65 +716,65 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
                 }
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         if (search != null && search.visible && search.isFocused()) {
-            return search.charTyped(codePoint, modifiers);
+            return search.charTyped(event);
         }
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(event);
     }
 
     @Override
-    protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ClickType type) {
+    protected void slotClicked(@Nullable Slot slot, int slotId, int mouseButton, ContainerInput type) {
         int index = slot != null ? slot.index : slotId;
         if (index >= StationMenu.WINDOW_START && index < StationMenu.WINDOW_END && !menu.isWindowSlotActive(index - StationMenu.WINDOW_START)) {
             return;
         }
-        if (type == ClickType.PICKUP_ALL && window().pending()) {
+        if (type == ContainerInput.PICKUP_ALL && window().pending()) {
             return;
         }
         super.slotClicked(slot, slotId, mouseButton, type);
     }
 
     @Override
-    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int mouseButton) {
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop) {
         if (overPanelOrTabs(mouseX, mouseY) || overActionButton(mouseX, mouseY)) {
             return false;
         }
-        return super.hasClickedOutside(mouseX, mouseY, guiLeft, guiTop, mouseButton);
+        return super.hasClickedOutside(mouseX, mouseY, guiLeft, guiTop);
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         relayout();
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        renderTooltip(guiGraphics, mouseX, mouseY);
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        guiGraphics.blit(BACKGROUND, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
         if (!panelShown()) {
             return;
         }
         int px = leftPos + panelX();
-        guiGraphics.blitSprite(footerShown() ? PANEL_TALL : PANEL, px, topPos, PANEL_WIDTH, panelHeight());
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, footerShown() ? PANEL_TALL : PANEL, px, topPos, PANEL_WIDTH, panelHeight());
         ClientWindow window = window();
         boolean scrollbar = scrollbarShown();
         int x0 = leftPos + StationMenu.windowX(panelX(), scrollbar);
         for (int k = 0; k < ClientWindow.SIZE; k++) {
             if (window.active(k) || window.previewSlot(k, menu.pageSize())) {
-                guiGraphics.blitSprite(SLOT, x0 - 1 + 18 * (k % 6), topPos + 16 + 18 * (k / 6), 18, 18);
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, SLOT, x0 - 1 + 18 * (k % 6), topPos + 16 + 18 * (k / 6), 18, 18);
             }
         }
         if (scrollbar) {
-            guiGraphics.blitSprite(SCROLLBAR_TRACK, px + 113, topPos + 16, 14, 162);
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLBAR_TRACK, px + 113, topPos + 16, 14, 162);
             int maxFirst = ServerView.maxFirst(displayPageLength());
             float fraction = maxFirst == 0 ? 0.0F : (float) window.displayFirst() / maxFirst;
-            guiGraphics.blitSprite(SCROLLER, px + 114, topPos + 17 + Mth.floor(145 * fraction), 12, 15);
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLER, px + 114, topPos + 17 + Mth.floor(145 * fraction), 12, 15);
         }
         if (window.pending()) {
             for (int k = 0; k < ClientWindow.SIZE; k++) {
@@ -781,15 +787,15 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
                 }
                 int x = x0 + 18 * (k % 6);
                 int y = topPos + 17 + 18 * (k / 6);
-                guiGraphics.renderItem(preview, x, y);
-                guiGraphics.renderItemDecorations(font, preview, x, y, countText(preview));
+                guiGraphics.item(preview, x, y);
+                guiGraphics.itemDecorations(font, preview, x, y, countText(preview));
             }
         }
     }
 
     @Override
-    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        super.renderLabels(guiGraphics, mouseX, mouseY);
+    protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+        super.extractLabels(guiGraphics, mouseX, mouseY);
         if (!panelShown()) {
             return;
         }
@@ -797,7 +803,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
         SideEntry entry = side == null ? null : menu.sideEntry(side);
         if (entry != null) {
             String name = font.plainSubstrByWidth(entry.name().getString(), 122);
-            guiGraphics.drawString(font, name, panelX() + 8, 6, 0x404040, false);
+            guiGraphics.text(font, name, panelX() + 8, 6, 0xFF404040, false);
         }
     }
 
@@ -810,7 +816,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     }
 
     @Override
-    protected void renderSlotContents(GuiGraphics guiGraphics, ItemStack itemstack, Slot slot, @Nullable String countString) {
+    protected void renderSlotContents(GuiGraphicsExtractor guiGraphics, ItemStack itemstack, Slot slot, @Nullable String countString) {
         if (countString == null && slot instanceof WindowSlot) {
             countString = countText(itemstack);
         }

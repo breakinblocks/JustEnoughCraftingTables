@@ -4,26 +4,29 @@ import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import com.breakinblocks.justenoughcraftingtables.menu.SideEntry;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 public class SideTabButton extends AbstractWidget {
-    public static final ResourceLocation SELECTED = JustEnoughCraftingTables.id("tab_selected");
-    public static final ResourceLocation UNSELECTED = JustEnoughCraftingTables.id("tab_unselected");
+    public static final Identifier SELECTED = JustEnoughCraftingTables.id("tab_selected");
+    public static final Identifier UNSELECTED = JustEnoughCraftingTables.id("tab_unselected");
     public static final int WIDTH = 22;
     public static final int HEIGHT = 28;
 
@@ -93,13 +96,16 @@ public class SideTabButton extends AbstractWidget {
     }
 
     @Override
-    protected boolean isValidClickButton(int button) {
-        return button == 0 || button == 1;
+    protected boolean isValidClickButton(MouseButtonInfo buttonInfo) {
+        return buttonInfo.button() == 0 || buttonInfo.button() == 1;
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!active || !visible || entry == null || !isValidClickButton(button) || !clicked(mouseX, mouseY)) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+        if (!active || !visible || entry == null || !isValidClickButton(event.buttonInfo()) || !isMouseOver(mouseX, mouseY)) {
             return false;
         }
         if (button == 1) {
@@ -121,29 +127,29 @@ public class SideTabButton extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (entry == null) {
             return;
         }
-        guiGraphics.blitSprite(selected && !entry.hidden() ? SELECTED : UNSELECTED, getX(), getY(), WIDTH, HEIGHT);
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, selected && !entry.hidden() ? SELECTED : UNSELECTED, getX(), getY(), WIDTH, HEIGHT);
         ItemStack icon = entry.icon();
         int iconX = getX() + 3;
         int iconY = getY() + 3;
         if (!icon.isEmpty()) {
-            guiGraphics.renderItem(icon, iconX, iconY);
+            guiGraphics.item(icon, iconX, iconY);
             if (entry.hidden() || dimmed) {
-                guiGraphics.pose().pushPose();
-                guiGraphics.pose().translate(0.0F, 0.0F, 200.0F);
+                guiGraphics.pose().pushMatrix();
+                guiGraphics.nextStratum();
                 guiGraphics.fill(iconX, iconY, iconX + 16, iconY + 16, 0xA08B8B8B);
-                guiGraphics.pose().popPose();
+                guiGraphics.pose().popMatrix();
             }
         }
         if (badge != null && !entry.hidden()) {
             Font font = Minecraft.getInstance().font;
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0.0F, 0.0F, 200.0F);
-            guiGraphics.drawString(font, badge, iconX + 19 - 2 - font.width(badge), iconY + 6 + 3, 0xFFFFFF, true);
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.nextStratum();
+            guiGraphics.text(font, badge, iconX + 19 - 2 - font.width(badge), iconY + 6 + 3, 0xFFFFFFFF, true);
+            guiGraphics.pose().popMatrix();
         }
     }
 

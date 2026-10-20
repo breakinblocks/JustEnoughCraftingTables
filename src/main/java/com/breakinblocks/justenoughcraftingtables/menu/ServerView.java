@@ -1,7 +1,7 @@
 package com.breakinblocks.justenoughcraftingtables.menu;
 
-import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
+import org.jspecify.annotations.Nullable;
 
 public final class ServerView {
     private final int pageSize;

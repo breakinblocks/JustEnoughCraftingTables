@@ -3,18 +3,17 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.items.IItemHandler;
 
 public final class ServerSide {
     private final Direction direction;
     private final BlockPos pos;
     private final BlockEntity blockEntity;
-    private final IItemHandler handler;
+    private final ItemStorage handler;
     private SideEntry entry;
     private boolean invalid;
     private boolean modified;
 
-    public ServerSide(Direction direction, BlockPos pos, BlockEntity blockEntity, IItemHandler handler, SideEntry entry) {
+    public ServerSide(Direction direction, BlockPos pos, BlockEntity blockEntity, ItemStorage handler, SideEntry entry) {
         this.direction = direction;
         this.pos = pos;
         this.blockEntity = blockEntity;
@@ -34,7 +33,7 @@ public final class ServerSide {
         return blockEntity;
     }
 
-    public IItemHandler handler() {
+    public ItemStorage handler() {
         return handler;
     }
 

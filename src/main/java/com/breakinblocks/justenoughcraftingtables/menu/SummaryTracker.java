@@ -11,10 +11,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import org.jspecify.annotations.Nullable;
 
 public final class SummaryTracker {
     private final Map<ItemKey, Integer> ids = new HashMap<>();
@@ -81,7 +80,7 @@ public final class SummaryTracker {
         return revision;
     }
 
-    public void bind(Direction direction, @Nullable IItemHandler handler) {
+    public void bind(Direction direction, @Nullable ItemStorage handler) {
         int index = direction.get3DDataValue();
         SideScan current = scans[index];
         if (handler == null) {
@@ -173,7 +172,7 @@ public final class SummaryTracker {
     }
 
     private static final class SideScan {
-        private final IItemHandler handler;
+        private final ItemStorage handler;
         private final Int2LongOpenHashMap totals = new Int2LongOpenHashMap();
         private final Int2LongOpenHashMap available = new Int2LongOpenHashMap();
         private final IntLinkedOpenHashSet dirty = new IntLinkedOpenHashSet();
@@ -185,7 +184,7 @@ public final class SummaryTracker {
         private boolean partialThisRound;
         private boolean complete;
 
-        private SideScan(IItemHandler handler) {
+        private SideScan(ItemStorage handler) {
             this.handler = handler;
         }
 
