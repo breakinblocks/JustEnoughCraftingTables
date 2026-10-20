@@ -2,9 +2,9 @@ package com.breakinblocks.justenoughcraftingtables.data;
 
 import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import net.minecraft.data.DataGenerator;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.minecraftforge.data.event.GatherDataEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 @EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public final class ModDataGen {

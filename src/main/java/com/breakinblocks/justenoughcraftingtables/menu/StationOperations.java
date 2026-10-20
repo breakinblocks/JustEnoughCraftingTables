@@ -12,8 +12,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 public final class StationOperations {
     public enum FillResult {
@@ -230,7 +230,7 @@ public final class StationOperations {
                     int count = 0;
                     boolean wrong = false;
                     for (ItemStack stack : got) {
-                        if (!ItemStack.isSameItemSameComponents(stack, entry.getKey().stack())) {
+                        if (!ItemStack.isSameItemSameTags(stack, entry.getKey().stack())) {
                             wrong = true;
                         }
                         count += stack.getCount();
@@ -394,14 +394,14 @@ public final class StationOperations {
             int slots = handler.getSlots();
             for (int slot = s == hint[0] ? hint[1] : 0; slot < slots; slot++) {
                 ItemStack stack = handler.getStackInSlot(slot);
-                if (stack.isEmpty() || !ItemStack.isSameItemSameComponents(stack, template)) {
+                if (stack.isEmpty() || !ItemStack.isSameItemSameTags(stack, template)) {
                     continue;
                 }
                 ItemStack extracted = handler.extractItem(slot, 1, false);
                 if (extracted.isEmpty()) {
                     continue;
                 }
-                if (!ItemStack.isSameItemSameComponents(extracted, template)) {
+                if (!ItemStack.isSameItemSameTags(extracted, template)) {
                     ItemStack remainder = handler.insertItem(slot, extracted, false);
                     if (!remainder.isEmpty()) {
                         menu.player().getInventory().placeItemBackInInventory(remainder);

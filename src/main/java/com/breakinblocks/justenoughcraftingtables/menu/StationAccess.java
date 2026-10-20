@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
 
 public final class StationAccess {
     private StationAccess() {
@@ -47,14 +47,14 @@ public final class StationAccess {
             if (part.isRemoved()
                     || part instanceof Container container && !container.stillValid(player)
                     || part instanceof BaseContainerBlockEntity container && !container.canOpen(player)
-                    || NeoForge.EVENT_BUS.post(new StationAccessEvent(player, stationPos, part)).isCanceled()) {
+                    || MinecraftForge.EVENT_BUS.post(new StationAccessEvent(player, stationPos, part))) {
                 return false;
             }
         }
         for (BlockEntity part : parts) {
-            if (prepareLoot && part instanceof RandomizableContainerBlockEntity container && container.getLootTable() != null) {
+            if (prepareLoot && part instanceof RandomizableContainerBlockEntity container) {
                 if (player.isSpectator()) {
-                    return false;
+                    continue;
                 }
                 container.unpackLootTable(player);
             }

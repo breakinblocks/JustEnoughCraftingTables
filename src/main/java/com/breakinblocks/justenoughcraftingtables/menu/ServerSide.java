@@ -3,7 +3,7 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public final class ServerSide {
     private final Direction direction;

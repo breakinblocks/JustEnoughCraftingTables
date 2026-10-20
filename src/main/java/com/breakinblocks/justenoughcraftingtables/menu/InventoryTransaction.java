@@ -3,7 +3,7 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 /** Holds extracted inputs until the entire replacement grid and displaced-item returns have been planned. */
 final class InventoryTransaction implements AutoCloseable {

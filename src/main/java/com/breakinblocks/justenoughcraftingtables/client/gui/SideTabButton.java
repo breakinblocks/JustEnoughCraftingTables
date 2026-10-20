@@ -125,7 +125,7 @@ public class SideTabButton extends AbstractWidget {
         if (entry == null) {
             return;
         }
-        guiGraphics.blitSprite(selected && !entry.hidden() ? SELECTED : UNSELECTED, getX(), getY(), WIDTH, HEIGHT);
+        GuiSprites.blit(guiGraphics, selected && !entry.hidden() ? SELECTED : UNSELECTED, getX(), getY(), WIDTH, HEIGHT);
         ItemStack icon = entry.icon();
         int iconX = getX() + 3;
         int iconY = getY() + 3;

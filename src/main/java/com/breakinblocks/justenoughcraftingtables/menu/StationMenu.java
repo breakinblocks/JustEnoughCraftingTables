@@ -4,9 +4,13 @@ import com.breakinblocks.justenoughcraftingtables.common.block.StationBlocks;
 import com.breakinblocks.justenoughcraftingtables.common.blockentity.StationBlockEntity;
 import com.breakinblocks.justenoughcraftingtables.config.JustEnoughCraftingTablesConfig;
 import com.breakinblocks.justenoughcraftingtables.net.FillRecipePayload;
+import com.breakinblocks.justenoughcraftingtables.net.ModNetwork;
 import com.breakinblocks.justenoughcraftingtables.net.SidesPayload;
+import com.breakinblocks.justenoughcraftingtables.net.StationPacket;
 import com.breakinblocks.justenoughcraftingtables.net.SummaryPayload;
 import com.breakinblocks.justenoughcraftingtables.net.ViewPayload;
+import com.breakinblocks.justenoughcraftingtables.net.ViewFragmentPayload;
+import com.breakinblocks.justenoughcraftingtables.net.ViewRequestAssembler;
 import com.breakinblocks.justenoughcraftingtables.net.ViewStatePayload;
 import com.breakinblocks.justenoughcraftingtables.registry.ModMenus;
 import java.util.ArrayList;
@@ -18,9 +22,8 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,17 +37,16 @@ import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 
 public class StationMenu extends AbstractContainerMenu {
     public static final int RESULT_SLOT = 0;
@@ -98,6 +100,9 @@ public class StationMenu extends AbstractContainerMenu {
     private long lastTick = Long.MIN_VALUE;
     private long lastFillTick = Long.MIN_VALUE;
     private final ViewRequests viewRequests = new ViewRequests();
+    private final ViewRequestAssembler viewFragments = new ViewRequestAssembler();
+    private final NonNullList<ItemStack> sentWindow = NonNullList.withSize(ClientWindow.SIZE, ItemStack.EMPTY);
+    private boolean windowSent;
     private ItemStack accessKey = ItemStack.EMPTY;
     @Nullable
     private ViewScan viewScan;
@@ -106,7 +111,7 @@ public class StationMenu extends AbstractContainerMenu {
     private long lastScanTick = Long.MIN_VALUE;
     @Nullable
     private int[] serverFilter;
-    private Collection<RecipeHolder<?>> recipeSnapshot = List.of();
+    private Collection<Recipe<?>> recipeSnapshot = List.of();
 
     private int summaryTimer;
     private boolean closed;
@@ -114,7 +119,7 @@ public class StationMenu extends AbstractContainerMenu {
     private boolean repeatCraft;
 
     @Nullable
-    private RecipeHolder<CraftingRecipe> lastRecipe;
+    private CraftingRecipe lastRecipe;
 
     private final List<OriginEntry> cursorEntries = new ArrayList<>();
     private ItemStack cursorTracked = ItemStack.EMPTY;
@@ -134,7 +139,7 @@ public class StationMenu extends AbstractContainerMenu {
     private int clientRevision;
     private int windowX = PANEL_LEFT + 13;
 
-    public StationMenu(int containerId, Inventory inventory, RegistryFriendlyByteBuf data) {
+    public StationMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         super(ModMenus.CRAFTING_STATION.get(), containerId);
         this.clientSide = true;
         this.player = inventory.player;
@@ -225,17 +230,54 @@ public class StationMenu extends AbstractContainerMenu {
         }
     }
 
-    public void writeOpenData(RegistryFriendlyByteBuf buffer) {
+    public static void writeInitialData(ServerPlayer player, StationBlockEntity station, FriendlyByteBuf buffer) {
+        List<ServerSide> discovered = SideDiscovery.discover((ServerLevel) station.getLevel(), station.getBlockPos(), player, station,
+                (direction, target, context) -> {
+                    BlockEntity inventory = station.getLevel().getBlockEntity(target);
+                    IItemHandler handler = inventory == null ? null : inventory.getCapability(ForgeCapabilities.ITEM_HANDLER, context).orElse(null);
+                    return handler == null ? null : new AccessItemHandler(handler, () -> StationAccess.allowed(player, station.getBlockPos(), inventory, true));
+                });
+        List<SideEntry> entries = discovered.stream().map(ServerSide::entry).toList();
+        Direction selected = station.getSelectedSide();
+        boolean selectedVisible = false;
+        for (SideEntry entry : entries) {
+            if (entry.direction() == selected && !entry.hidden()) selectedVisible = true;
+        }
+        if (!selectedVisible) selected = entries.stream().filter(entry -> !entry.hidden()).map(SideEntry::direction).findFirst().orElse(null);
+        writeOpenData(buffer, station.getBlockPos(), JustEnoughCraftingTablesConfig.pageSize(),
+                JustEnoughCraftingTablesConfig.SERVER.allowInsertIntoSides.get(), 1, entries, selected);
+    }
+
+    public void writeOpenData(FriendlyByteBuf buffer) {
+        writeOpenData(buffer, pos, pageSize, allowInsert, sidesVersion, sides, view == null ? null : view.side());
+    }
+
+    private static void writeOpenData(FriendlyByteBuf buffer, BlockPos pos, int pageSize, boolean allowInsert,
+            int version, List<SideEntry> sides, @Nullable Direction selected) {
         buffer.writeBlockPos(pos);
         buffer.writeVarInt(pageSize);
         buffer.writeBoolean(allowInsert);
-        buffer.writeVarInt(sidesVersion);
+        buffer.writeVarInt(version);
         SideEntry.LIST_STREAM_CODEC.encode(buffer, sides);
-        Direction selected = view == null ? null : view.side();
         buffer.writeBoolean(selected != null);
-        if (selected != null) {
-            buffer.writeVarInt(selected.get3DDataValue());
+        if (selected != null) buffer.writeVarInt(selected.get3DDataValue());
+    }
+
+    @Override
+    public void setItem(int slot, int stateId, ItemStack stack) {
+        if (clientSide && slot >= WINDOW_START && slot < WINDOW_END) {
+            stack = clientWindow.stack(slot - WINDOW_START);
         }
+        super.setItem(slot, stateId, stack);
+    }
+
+    @Override
+    public void initializeContents(int stateId, List<ItemStack> items, ItemStack carried) {
+        if (clientSide) {
+            items = new ArrayList<>(items);
+            for (int i = WINDOW_START; i < WINDOW_END && i < items.size(); i++) items.set(i, clientWindow.stack(i - WINDOW_START));
+        }
+        super.initializeContents(stateId, items, carried);
     }
 
     public boolean isClientSide() {
@@ -409,7 +451,7 @@ public class StationMenu extends AbstractContainerMenu {
             if (!current.isEmpty()) {
                 extractFully(handler, real, current.getCount());
             }
-        } else if (current.isEmpty() || ItemStack.isSameItemSameComponents(current, stack)) {
+        } else if (current.isEmpty() || ItemStack.isSameItemSameTags(current, stack)) {
             int diff = stack.getCount() - current.getCount();
             if (diff > 0) {
                 if (allowInsert && handler.isItemValid(real, stack)) {
@@ -503,20 +545,42 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     private final class CacheHolder {
-        private final BlockCapabilityCache<IItemHandler, Direction> cache;
-
         @Nullable
         private final Direction context;
-
+        private final Direction direction;
+        private final BlockPos target;
+        private final ServerLevel serverLevel;
         private boolean active = true;
+        private LazyOptional<IItemHandler> capability = LazyOptional.empty();
+        private BlockEntity inventory;
         private IItemHandler raw;
         private IItemHandler guarded;
+        private BlockEntity guardInventory;
         private boolean valid;
 
         private CacheHolder(ServerLevel serverLevel, Direction direction, BlockPos target, @Nullable Direction context) {
+            this.serverLevel = serverLevel;
+            this.direction = direction;
+            this.target = target;
             this.context = context;
-            this.cache = BlockCapabilityCache.create(
-                    Capabilities.ItemHandler.BLOCK, serverLevel, target, context, () -> active && !closed, () -> onCapabilityInvalidated(direction));
+        }
+
+        private IItemHandler capability() {
+            BlockEntity current = serverLevel.getBlockEntity(target);
+            if (!valid || current != inventory) {
+                inventory = current;
+                capability = current == null ? LazyOptional.empty() : current.getCapability(ForgeCapabilities.ITEM_HANDLER, context);
+                valid = capability.isPresent();
+                if (valid) {
+                    LazyOptional<IItemHandler> bound = capability;
+                    capability.addListener(ignored -> {
+                        if (active && capability == bound && caches[direction.get3DDataValue()] == this) {
+                            onCapabilityInvalidated(direction);
+                        }
+                    });
+                }
+            }
+            return capability.orElse(null);
         }
     }
 
@@ -546,14 +610,15 @@ public class StationMenu extends AbstractContainerMenu {
             holder = new CacheHolder(serverLevel, direction, target, context);
             caches[index] = holder;
         }
-        IItemHandler raw = holder.cache.getCapability();
-        holder.valid = true;
-        if (raw != holder.raw) {
+        IItemHandler raw = holder.capability();
+        if (raw != holder.raw || holder.guardInventory != holder.inventory) {
             holder.raw = raw;
-            BlockEntity inventory = level.getBlockEntity(target);
+            BlockEntity inventory = holder.inventory;
+            holder.guardInventory = inventory;
             CacheHolder bound = holder;
             holder.guarded = raw == null ? null : new AccessItemHandler(raw,
-                    () -> bound.active && bound.valid && !closed && stillValid(player) && !station().isHidden(direction)
+                    () -> bound.active && bound.valid && bound.raw == raw && bound.guardInventory == inventory
+                            && !closed && stillValid(player) && !station().isHidden(direction)
                             && level.getBlockEntity(target) == inventory && StationAccess.allowed(player, pos, inventory, true));
         }
         return holder.guarded;
@@ -619,9 +684,9 @@ public class StationMenu extends AbstractContainerMenu {
         }
     }
 
-    private void send(CustomPacketPayload payload) {
-        if (player instanceof ServerPlayer serverPlayer && serverPlayer.connection != null && serverPlayer.connection.hasChannel(payload)) {
-            serverPlayer.connection.send(payload);
+    private void send(StationPacket payload) {
+        if (player instanceof ServerPlayer serverPlayer && serverPlayer.connection != null && ModNetwork.hasChannel(serverPlayer)) {
+            ModNetwork.sendToPlayer(serverPlayer, payload);
         }
     }
 
@@ -629,6 +694,11 @@ public class StationMenu extends AbstractContainerMenu {
     public void broadcastChanges() {
         if (!clientSide && !closed) {
             serverTick();
+            boolean changed = !windowSent;
+            for (int k = 0; k < ClientWindow.SIZE && !changed; k++) {
+                changed = !ItemStack.matches(windowSlots[k].getItem(), sentWindow.get(k));
+            }
+            if (changed) sendViewState(0);
         }
         super.broadcastChanges();
     }
@@ -647,7 +717,7 @@ public class StationMenu extends AbstractContainerMenu {
             accessKey = player.getMainHandItem().copy();
             runDiscovery(true);
         }
-        Collection<RecipeHolder<?>> currentRecipes = level.getRecipeManager().getRecipes();
+        Collection<Recipe<?>> currentRecipes = level.getRecipeManager().getRecipes();
         if (recipeSnapshot != currentRecipes) {
             recipeSnapshot = currentRecipes;
             lastRecipe = null;
@@ -735,10 +805,22 @@ public class StationMenu extends AbstractContainerMenu {
         send(new ViewStatePayload(containerId, requestId, info, real, stacks));
         for (int k = 0; k < ClientWindow.SIZE; k++) {
             setRemoteSlot(WINDOW_START + k, stacks.get(k));
+            sentWindow.set(k, stacks.get(k).copy());
         }
+        windowSent = true;
+    }
+
+    public void handleViewFragment(ViewFragmentPayload fragment) {
+        if (clientSide || view == null || fragment.view().sidesVersion() != sidesVersion || fragment.view().requestId() <= 0) {
+            viewFragments.clear();
+            return;
+        }
+        ViewPayload complete = viewFragments.accept(fragment);
+        if (complete != null) handleViewRequest(complete.requestId(), complete.sidesVersion(), complete.request());
     }
 
     public void handleViewRequest(int requestId, int version, ViewPayload.Request request) {
+        viewFragments.clear();
         if (clientSide || view == null || version != sidesVersion) {
             return;
         }
@@ -913,19 +995,19 @@ public class StationMenu extends AbstractContainerMenu {
     }
 
     private ItemStack computeResult(ServerPlayer serverPlayer, boolean remember) {
-        CraftingInput input = grid.asCraftInput();
-        Optional<RecipeHolder<CraftingRecipe>> found = StationRecipes.find(this, serverPlayer, input, level, lastRecipe);
+        CraftingContainer input = grid;
+        Optional<CraftingRecipe> found = StationRecipes.find(this, serverPlayer, input, level, lastRecipe);
         if (found.isEmpty()) {
             if (remember) {
                 result.setRecipeUsed(null);
             }
             return ItemStack.EMPTY;
         }
-        RecipeHolder<CraftingRecipe> holder = found.get();
+        CraftingRecipe holder = found.get();
         if (remember) {
             lastRecipe = holder;
         }
-        boolean allowed = holder.value().isSpecial()
+        boolean allowed = holder.isSpecial()
                 || !level.getGameRules().getBoolean(GameRules.RULE_LIMITED_CRAFTING)
                 || serverPlayer.getRecipeBook().contains(holder);
         if (!allowed) {
@@ -934,7 +1016,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (remember) {
             result.setRecipeUsed(holder);
         }
-        ItemStack assembled = holder.value().assemble(input, level.registryAccess());
+        ItemStack assembled = holder.assemble(input, level.registryAccess());
         return assembled.isItemEnabled(level.enabledFeatures()) ? assembled : ItemStack.EMPTY;
     }
 
@@ -962,10 +1044,10 @@ public class StationMenu extends AbstractContainerMenu {
         return false;
     }
 
-    public NonNullList<ItemStack> remainingItems(CraftingInput input) {
-        RecipeHolder<CraftingRecipe> holder = lastRecipe;
-        if (holder != null && level.getRecipeManager().byKey(holder.id()).orElse(null) == holder && holder.value().matches(input, level)) {
-            return holder.value().getRemainingItems(input);
+    public NonNullList<ItemStack> remainingItems(CraftingContainer input) {
+        CraftingRecipe holder = lastRecipe;
+        if (holder != null && level.getRecipeManager().byKey(holder.getId()).orElse(null) == holder && holder.matches(input, level)) {
+            return holder.getRemainingItems(input);
         }
         return level.getRecipeManager().getRemainingItemsFor(RecipeType.CRAFTING, input, level);
     }
@@ -984,7 +1066,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (!StationBlocks.isStation(level.getBlockState(pos))) {
             return false;
         }
-        return player.canInteractWithBlock(pos, 4.0);
+        return player.canReach(pos, 4.0);
     }
 
     @Override
@@ -1143,7 +1225,7 @@ public class StationMenu extends AbstractContainerMenu {
             ItemStack carried = getCarried();
             if (carried.isEmpty()) {
                 setCarried(stack);
-            } else if (ItemStack.isSameItemSameComponents(carried, stack)) {
+            } else if (ItemStack.isSameItemSameTags(carried, stack)) {
                 carried.grow(stack.getCount());
             } else {
                 player.getInventory().placeItemBackInInventory(stack);
@@ -1193,7 +1275,7 @@ public class StationMenu extends AbstractContainerMenu {
             setCarried(slot.safeInsert(carried, amount));
             return;
         }
-        if (!current.isEmpty() && ItemStack.isSameItemSameComponents(current, carried) && slot.mayPickup(player)) {
+        if (!current.isEmpty() && ItemStack.isSameItemSameTags(current, carried) && slot.mayPickup(player)) {
             int space = carried.getMaxStackSize() - carried.getCount();
             if (space > 0) {
                 ItemStack extracted = handler.extractItem(real, Math.min(space, current.getMaxStackSize()), false);
@@ -1225,7 +1307,7 @@ public class StationMenu extends AbstractContainerMenu {
             }
             return;
         }
-        if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, held)) {
+        if (!current.isEmpty() && !ItemStack.isSameItemSameTags(current, held)) {
             return;
         }
         if (!current.isEmpty() && current.getCount() > current.getMaxStackSize()) {
@@ -1279,7 +1361,7 @@ public class StationMenu extends AbstractContainerMenu {
                     continue;
                 }
                 ItemStack current = be.getGridItem(i);
-                if (!current.isEmpty() && ItemStack.isSameItemSameComponents(current, wanted)) {
+                if (!current.isEmpty() && ItemStack.isSameItemSameTags(current, wanted)) {
                     continue;
                 }
                 if (!current.isEmpty() && !StationOperations.storeSlot(this, i, true)) {
@@ -1397,7 +1479,7 @@ public class StationMenu extends AbstractContainerMenu {
         for (int i = INVENTORY_START; i < INVENTORY_END && capacity < stack.getCount(); i++) {
             Slot slot = slots.get(i);
             ItemStack current = slot.getItem();
-            if (!current.isEmpty() && ItemStack.isSameItemSameComponents(current, stack)) {
+            if (!current.isEmpty() && ItemStack.isSameItemSameTags(current, stack)) {
                 capacity += Math.max(0, Math.min(max, slot.getMaxStackSize(stack)) - current.getCount());
             }
         }
@@ -1417,7 +1499,7 @@ public class StationMenu extends AbstractContainerMenu {
             cursorTracked = ItemStack.EMPTY;
             return;
         }
-        if (cursorTracked.isEmpty() || !ItemStack.isSameItemSameComponents(cursorTracked, carried)) {
+        if (cursorTracked.isEmpty() || !ItemStack.isSameItemSameTags(cursorTracked, carried)) {
             cursorEntries.clear();
             cursorEntries.add(new OriginEntry(Origin.PLAYER, carried.getCount()));
             cursorTracked = carried.copy();
@@ -1457,7 +1539,7 @@ public class StationMenu extends AbstractContainerMenu {
 
     @FunctionalInterface
     public interface PayloadSender {
-        void send(CustomPacketPayload payload);
+        void send(StationPacket payload);
     }
 
     public void applySides(SidesPayload payload, PayloadSender sender) {
@@ -1526,14 +1608,14 @@ public class StationMenu extends AbstractContainerMenu {
         long total = 0;
         for (int i = GRID_START; i < GRID_END; i++) {
             ItemStack item = slots.get(i).getItem();
-            if (ItemStack.isSameItemSameComponents(item, stack)) {
+            if (ItemStack.isSameItemSameTags(item, stack)) {
                 total += item.getCount();
             }
         }
         Inventory inventory = player.getInventory();
         for (int i = 0; i < 36; i++) {
             ItemStack item = inventory.getItem(i);
-            if (ItemStack.isSameItemSameComponents(item, stack)) {
+            if (ItemStack.isSameItemSameTags(item, stack)) {
                 total += item.getCount();
             }
         }
@@ -1620,7 +1702,7 @@ public class StationMenu extends AbstractContainerMenu {
                 ItemStack b = before[i];
                 ItemStack a = after[i];
                 int decrease = 0;
-                if (!b.isEmpty() && (a.isEmpty() || !ItemStack.isSameItemSameComponents(a, b))) {
+                if (!b.isEmpty() && (a.isEmpty() || !ItemStack.isSameItemSameTags(a, b))) {
                     decrease = b.getCount();
                     increase[i] = a.getCount();
                     replaced[i] = true;
@@ -1669,7 +1751,7 @@ public class StationMenu extends AbstractContainerMenu {
                 int need = increase[i];
                 for (int p = 0; p < pool.size() && need > 0; p++) {
                     Chunk chunk = pool.get(p);
-                    if (chunk.count() <= 0 || !ItemStack.isSameItemSameComponents(chunk.item(), a)) {
+                    if (chunk.count() <= 0 || !ItemStack.isSameItemSameTags(chunk.item(), a)) {
                         continue;
                     }
                     int take = Math.min(need, chunk.count());

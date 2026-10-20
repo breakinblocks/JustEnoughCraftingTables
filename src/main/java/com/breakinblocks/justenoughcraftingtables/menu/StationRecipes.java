@@ -4,22 +4,20 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 public final class StationRecipes {
     @FunctionalInterface
     public interface Lookup {
-        Optional<RecipeHolder<CraftingRecipe>> find(
-                StationMenu menu, ServerPlayer player, CraftingInput input, Level level, @Nullable RecipeHolder<CraftingRecipe> last);
+        Optional<CraftingRecipe> find(
+                StationMenu menu, ServerPlayer player, CraftingContainer input, Level level, @Nullable CraftingRecipe last);
     }
 
     public static final Lookup VANILLA = (menu, player, input, level, last) ->
-            level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level, last == null ? (ResourceLocation) null : last.id());
+            level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level, last == null ? null : last.getId()).map(pair -> pair.getSecond());
 
     private static Lookup lookup = VANILLA;
 
@@ -30,16 +28,16 @@ public final class StationRecipes {
         lookup = Objects.requireNonNull(newLookup);
     }
 
-    public static Optional<RecipeHolder<CraftingRecipe>> find(
-            StationMenu menu, ServerPlayer player, CraftingInput input, Level level, @Nullable RecipeHolder<CraftingRecipe> last) {
+    public static Optional<CraftingRecipe> find(
+            StationMenu menu, ServerPlayer player, CraftingContainer input, Level level, @Nullable CraftingRecipe last) {
         if (input.isEmpty()) {
             return Optional.empty();
         }
-        RecipeHolder<CraftingRecipe> current = null;
-        if (last != null && level.getRecipeManager().byKey(last.id()).orElse(null) == last) {
+        CraftingRecipe current = null;
+        if (last != null && level.getRecipeManager().byKey(last.getId()).orElse(null) == last) {
             current = last;
         }
         return lookup.find(menu, player, input, level, current)
-                .filter(holder -> level.getRecipeManager().byKey(holder.id()).orElse(null) == holder);
+                .filter(holder -> level.getRecipeManager().byKey(holder.getId()).orElse(null) == holder);
     }
 }

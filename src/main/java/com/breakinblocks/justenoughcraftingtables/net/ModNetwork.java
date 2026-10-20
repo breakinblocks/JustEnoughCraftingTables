@@ -1,71 +1,90 @@
 package com.breakinblocks.justenoughcraftingtables.net;
 
 import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
+import com.breakinblocks.justenoughcraftingtables.client.ClientPackets;
 import com.breakinblocks.justenoughcraftingtables.menu.StationMenu;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.simple.SimpleChannel;
 
-@EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public final class ModNetwork {
+    private static final String VERSION = "1";
+    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(JustEnoughCraftingTables.id("main"),
+            () -> VERSION, VERSION::equals, VERSION::equals);
+
     private ModNetwork() {
     }
 
-    @SubscribeEvent
-    public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar(JustEnoughCraftingTables.MOD_ID).versioned("2");
-        registrar.playToServer(ViewPayload.TYPE, ViewPayload.STREAM_CODEC, ModNetwork::handleView);
-        registrar.playToServer(FillRecipePayload.TYPE, FillRecipePayload.STREAM_CODEC, ModNetwork::handleFill);
-        registrar.playToClient(SidesPayload.TYPE, SidesPayload.STREAM_CODEC, ModNetwork::handleSides);
-        registrar.playToClient(ViewStatePayload.TYPE, ViewStatePayload.STREAM_CODEC, ModNetwork::handleViewState);
-        registrar.playToClient(SummaryPayload.TYPE, SummaryPayload.STREAM_CODEC, ModNetwork::handleSummary);
+    public static void register() {
+        register(ViewFragmentPayload.class, 5, NetworkDirection.PLAY_TO_SERVER, ViewFragmentPayload.STREAM_CODEC, (payload, supplier) -> {
+            NetworkEvent.Context context = supplier.get();
+            ServerPlayer player = context.getSender();
+            StationMenu menu = menu(player, payload.view().containerId());
+            if (menu != null && menu.stillValid(player) && !player.isSpectator()) menu.handleViewFragment(payload);
+            context.setPacketHandled(true);
+        });
+        register(ViewPayload.class, 0, NetworkDirection.PLAY_TO_SERVER, ViewPayload.STREAM_CODEC, (payload, supplier) -> {
+            NetworkEvent.Context context = supplier.get();
+            ServerPlayer player = context.getSender();
+            StationMenu menu = menu(player, payload.containerId());
+            if (menu != null && menu.stillValid(player) && !player.isSpectator()) {
+                menu.handleViewRequest(payload.requestId(), payload.sidesVersion(), payload.request());
+            }
+            context.setPacketHandled(true);
+        });
+        register(FillRecipePayload.class, 1, NetworkDirection.PLAY_TO_SERVER, FillRecipePayload.STREAM_CODEC, (payload, supplier) -> {
+            NetworkEvent.Context context = supplier.get();
+            ServerPlayer player = context.getSender();
+            StationMenu menu = menu(player, payload.containerId());
+            if (menu != null && menu.stillValid(player) && !player.isSpectator()) menu.handleFill(payload);
+            context.setPacketHandled(true);
+        });
+        register(SidesPayload.class, 2, NetworkDirection.PLAY_TO_CLIENT, SidesPayload.STREAM_CODEC, (payload, context) -> {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.sides(payload));
+            context.get().setPacketHandled(true);
+        });
+        register(ViewStatePayload.class, 3, NetworkDirection.PLAY_TO_CLIENT, ViewStatePayload.STREAM_CODEC, (payload, context) -> {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.view(payload));
+            context.get().setPacketHandled(true);
+        });
+        register(SummaryPayload.class, 4, NetworkDirection.PLAY_TO_CLIENT, SummaryPayload.STREAM_CODEC, (payload, context) -> {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPackets.summary(payload));
+            context.get().setPacketHandled(true);
+        });
+    }
+
+    private static <T extends StationPacket> void register(Class<T> type, int id, NetworkDirection direction,
+            PacketCodec<T> codec, BiConsumer<T, Supplier<NetworkEvent.Context>> handler) {
+        CHANNEL.messageBuilder(type, id, direction).encoder((payload, buffer) -> codec.encode(buffer, payload))
+                .decoder(codec::decode).consumerMainThread(handler).add();
     }
 
     @Nullable
-    private static StationMenu menu(Player player, int containerId) {
-        if (player != null && player.containerMenu instanceof StationMenu menu && menu.containerId == containerId) {
-            return menu;
-        }
-        return null;
+    private static StationMenu menu(@Nullable ServerPlayer player, int containerId) {
+        return player != null && player.containerMenu instanceof StationMenu menu && menu.containerId == containerId ? menu : null;
     }
 
-    private static void handleView(ViewPayload payload, IPayloadContext context) {
-        StationMenu menu = menu(context.player(), payload.containerId());
-        if (menu != null && menu.stillValid(context.player())) {
-            menu.handleViewRequest(payload.requestId(), payload.sidesVersion(), payload.request());
-        }
+    public static boolean hasChannel(ServerPlayer player) {
+        return player.connection != null && player.connection.connection.channel() != null && CHANNEL.isRemotePresent(player.connection.connection);
     }
 
-    private static void handleFill(FillRecipePayload payload, IPayloadContext context) {
-        StationMenu menu = menu(context.player(), payload.containerId());
-        if (menu != null && menu.stillValid(context.player()) && !context.player().isSpectator()) {
-            menu.handleFill(payload);
+    public static void sendToServer(StationPacket payload) {
+        if (payload instanceof ViewPayload view && view.request().filter().map(ids -> ids.length > ViewFragmentPayload.CHUNK_SIZE).orElse(false)) {
+            for (ViewFragmentPayload fragment : ViewFragmentPayload.split(view)) CHANNEL.sendToServer(fragment);
+        } else {
+            CHANNEL.sendToServer(payload);
         }
     }
 
-    private static void handleSides(SidesPayload payload, IPayloadContext context) {
-        StationMenu menu = menu(context.player(), payload.containerId());
-        if (menu != null) {
-            menu.applySides(payload, PacketDistributor::sendToServer);
-        }
-    }
-
-    private static void handleViewState(ViewStatePayload payload, IPayloadContext context) {
-        StationMenu menu = menu(context.player(), payload.containerId());
-        if (menu != null) {
-            menu.applyViewState(payload);
-        }
-    }
-
-    private static void handleSummary(SummaryPayload payload, IPayloadContext context) {
-        StationMenu menu = menu(context.player(), payload.containerId());
-        if (menu != null) {
-            menu.applySummary(payload);
-        }
+    public static void sendToPlayer(ServerPlayer player, StationPacket payload) {
+        if (hasChannel(player)) CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), payload);
     }
 }

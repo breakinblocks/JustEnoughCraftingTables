@@ -1,5 +1,6 @@
 package com.breakinblocks.justenoughcraftingtables.menu;
 
+import java.util.Objects;
 import net.minecraft.world.item.ItemStack;
 
 public final class ItemKey {
@@ -8,7 +9,7 @@ public final class ItemKey {
 
     private ItemKey(ItemStack stack) {
         this.stack = stack;
-        this.hash = ItemStack.hashItemAndComponents(stack);
+        this.hash = 31 * stack.getItem().hashCode() + Objects.hashCode(stack.getTag());
     }
 
     public static ItemKey of(ItemStack stack) {
@@ -25,7 +26,7 @@ public final class ItemKey {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof ItemKey key && hash == key.hash && ItemStack.isSameItemSameComponents(stack, key.stack);
+        return other instanceof ItemKey key && hash == key.hash && ItemStack.isSameItemSameTags(stack, key.stack);
     }
 
     @Override

@@ -30,7 +30,7 @@ public final class GridOrigins {
             return;
         }
         ItemStack previous = tracked[slot];
-        if (previous.isEmpty() || !ItemStack.isSameItemSameComponents(previous, actual)) {
+        if (previous.isEmpty() || !ItemStack.isSameItemSameTags(previous, actual)) {
             list.clear();
             list.add(new OriginEntry(Origin.PLAYER, actual.getCount()));
             tracked[slot] = actual.copyWithCount(1);
@@ -82,7 +82,7 @@ public final class GridOrigins {
             return;
         }
         List<OriginEntry> list = slots.get(slot);
-        if (tracked[slot].isEmpty() || !ItemStack.isSameItemSameComponents(tracked[slot], stackAfter)) {
+        if (tracked[slot].isEmpty() || !ItemStack.isSameItemSameTags(tracked[slot], stackAfter)) {
             list.clear();
             tracked[slot] = stackAfter.copyWithCount(1);
             trackedCount[slot] = 0;
@@ -105,7 +105,7 @@ public final class GridOrigins {
     @Nullable
     public Origin newest(int slot) {
         List<OriginEntry> list = slots.get(slot);
-        return list.isEmpty() ? null : list.getLast().origin();
+        return list.isEmpty() ? null : list.get(list.size() - 1).origin();
     }
 
     public void load(List<List<OriginEntry>> data, List<ItemStack> grid) {
@@ -126,8 +126,8 @@ public final class GridOrigins {
         if (count <= 0) {
             return;
         }
-        if (!list.isEmpty() && list.getLast().origin() == origin) {
-            OriginEntry last = list.removeLast();
+        if (!list.isEmpty() && list.get(list.size() - 1).origin() == origin) {
+            OriginEntry last = list.remove(list.size() - 1);
             list.add(last.withCount(last.count() + count));
         } else {
             list.add(new OriginEntry(origin, count));
@@ -144,13 +144,13 @@ public final class GridOrigins {
         List<OriginEntry> removed = new ArrayList<>();
         int left = count;
         while (left > 0 && !list.isEmpty()) {
-            OriginEntry last = list.removeLast();
+            OriginEntry last = list.remove(list.size() - 1);
             if (last.count() > left) {
                 list.add(last.withCount(last.count() - left));
-                removed.addFirst(last.withCount(left));
+                removed.add(0, last.withCount(left));
                 left = 0;
             } else {
-                removed.addFirst(last);
+                removed.add(0, last);
                 left -= last.count();
             }
         }
@@ -161,9 +161,9 @@ public final class GridOrigins {
         List<OriginEntry> removed = new ArrayList<>();
         int left = count;
         while (left > 0 && !list.isEmpty()) {
-            OriginEntry first = list.removeFirst();
+            OriginEntry first = list.remove(0);
             if (first.count() > left) {
-                list.addFirst(first.withCount(first.count() - left));
+                list.add(0, first.withCount(first.count() - left));
                 removed.add(first.withCount(left));
                 left = 0;
             } else {

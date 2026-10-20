@@ -53,7 +53,7 @@ public class IconButton extends AbstractButton {
         } else {
             sprite = set.normal();
         }
-        guiGraphics.blitSprite(sprite, getX(), getY(), width, height);
+        GuiSprites.blit(guiGraphics, sprite, getX(), getY(), width, height);
     }
 
     @Override

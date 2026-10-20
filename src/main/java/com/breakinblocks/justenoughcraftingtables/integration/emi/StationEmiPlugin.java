@@ -8,6 +8,7 @@ import dev.emi.emi.api.EmiPlugin;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.api.widget.Bounds;
 import net.minecraft.client.renderer.Rect2i;
 
@@ -15,6 +16,8 @@ import net.minecraft.client.renderer.Rect2i;
 public class StationEmiPlugin implements EmiPlugin {
     @Override
     public void register(EmiRegistry registry) {
+        registry.setDefaultComparison(ModBlocks.CRAFTING_STATION.get().asItem(), Comparison.compareNbt());
+        registry.setDefaultComparison(ModBlocks.CRAFTING_STATION_SLAB.get().asItem(), Comparison.compareNbt());
         registry.addRecipeHandler(ModMenus.CRAFTING_STATION.get(), new StationEmiHandler());
         registry.addWorkstation(VanillaEmiRecipeCategories.CRAFTING, EmiStack.of(ModBlocks.CRAFTING_STATION.get()));
         registry.addWorkstation(VanillaEmiRecipeCategories.CRAFTING, EmiStack.of(ModBlocks.CRAFTING_STATION_SLAB.get()));

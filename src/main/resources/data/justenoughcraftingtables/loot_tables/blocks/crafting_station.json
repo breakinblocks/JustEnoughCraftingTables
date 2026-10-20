@@ -10,10 +10,14 @@
           "name": "justenoughcraftingtables:crafting_station",
           "functions": [
             {
-              "function": "minecraft:copy_components",
+              "function": "minecraft:copy_nbt",
               "source": "block_entity",
-              "include": [
-                "minecraft:custom_name"
+              "ops": [
+                {
+                  "source": "CustomName",
+                  "target": "display.Name",
+                  "op": "replace"
+                }
               ]
             },
             {

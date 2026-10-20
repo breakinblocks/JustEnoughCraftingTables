@@ -1,44 +1,32 @@
 package com.breakinblocks.justenoughcraftingtables.net;
 
-import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import java.util.List;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
 
-public record SummaryPayload(int containerId, List<NewEntry> entries, List<Total> totals, int partialMask, int resetMask, int[] removedIds)
-        implements CustomPacketPayload {
-    public static final Type<SummaryPayload> TYPE = new Type<>(JustEnoughCraftingTables.id("summary"));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, SummaryPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, SummaryPayload::containerId,
-            NewEntry.STREAM_CODEC.apply(ByteBufCodecs.list(256)), SummaryPayload::entries,
-            Total.STREAM_CODEC.apply(ByteBufCodecs.list(2048)), SummaryPayload::totals,
-            ByteBufCodecs.VAR_INT, SummaryPayload::partialMask,
-            ByteBufCodecs.VAR_INT, SummaryPayload::resetMask,
-            NetCodecs.SORTED_IDS, SummaryPayload::removedIds,
-            SummaryPayload::new);
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+public record SummaryPayload(int containerId, List<NewEntry> entries, List<Total> totals, int partialMask, int resetMask, int[] removedIds) implements StationPacket {
+    public static final PacketCodec<SummaryPayload> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+        buffer.writeVarInt(payload.containerId());
+        NetCodecs.list(NewEntry.STREAM_CODEC, 256).encode(buffer, payload.entries());
+        NetCodecs.list(Total.STREAM_CODEC, 2048).encode(buffer, payload.totals());
+        buffer.writeVarInt(payload.partialMask());
+        buffer.writeVarInt(payload.resetMask());
+        NetCodecs.SORTED_IDS.encode(buffer, payload.removedIds());
+    }, buffer -> new SummaryPayload(buffer.readVarInt(), NetCodecs.list(NewEntry.STREAM_CODEC, 256).decode(buffer),
+            NetCodecs.list(Total.STREAM_CODEC, 2048).decode(buffer), buffer.readVarInt(), buffer.readVarInt(), NetCodecs.SORTED_IDS.decode(buffer)));
 
     public record NewEntry(int id, ItemStack template) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, NewEntry> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, NewEntry::id,
-                ItemStack.STREAM_CODEC, NewEntry::template,
-                NewEntry::new);
+        public static final PacketCodec<NewEntry> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+            buffer.writeVarInt(payload.id());
+            NetCodecs.ITEM.encode(buffer, payload.template());
+        }, buffer -> new NewEntry(buffer.readVarInt(), NetCodecs.ITEM.decode(buffer)));
     }
 
     public record Total(int id, int side, long total, long available) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, Total> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, Total::id,
-                ByteBufCodecs.VAR_INT, Total::side,
-                ByteBufCodecs.VAR_LONG, Total::total,
-                ByteBufCodecs.VAR_LONG, Total::available,
-                Total::new);
+        public static final PacketCodec<Total> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+            buffer.writeVarInt(payload.id());
+            buffer.writeVarInt(payload.side());
+            buffer.writeVarLong(payload.total());
+            buffer.writeVarLong(payload.available());
+        }, buffer -> new Total(buffer.readVarInt(), buffer.readVarInt(), buffer.readVarLong(), buffer.readVarLong()));
     }
 }

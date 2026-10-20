@@ -1,24 +1,24 @@
 package com.breakinblocks.justenoughcraftingtables.client;
 
 import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
+import com.breakinblocks.justenoughcraftingtables.client.gui.StationConfigScreen;
 import com.breakinblocks.justenoughcraftingtables.client.gui.StationScreen;
 import com.breakinblocks.justenoughcraftingtables.client.renderer.StationRenderer;
 import com.breakinblocks.justenoughcraftingtables.common.block.StationColor;
 import com.breakinblocks.justenoughcraftingtables.registry.ModBlockEntities;
 import com.breakinblocks.justenoughcraftingtables.registry.ModBlocks;
 import com.breakinblocks.justenoughcraftingtables.registry.ModMenus;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.client.gui.ConfigurationScreen;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 @EventBusSubscriber(modid = JustEnoughCraftingTables.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class JustEnoughCraftingTablesClient {
@@ -27,13 +27,8 @@ public final class JustEnoughCraftingTablesClient {
     private JustEnoughCraftingTablesClient() {
     }
 
-    public static void init(ModContainer container) {
-        container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
-    }
-
-    @SubscribeEvent
-    public static void registerScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenus.CRAFTING_STATION.get(), StationScreen::new);
+    public static void init(ModLoadingContext context) {
+        context.registerExtensionPoint(ConfigScreenFactory.class, () -> new ConfigScreenFactory((minecraft, parent) -> new StationConfigScreen(parent)));
     }
 
     @SubscribeEvent
@@ -58,6 +53,7 @@ public final class JustEnoughCraftingTablesClient {
     @SubscribeEvent
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            MenuScreens.register(ModMenus.CRAFTING_STATION.get(), StationScreen::new);
             ItemProperties.register(ModBlocks.CRAFTING_STATION.get().asItem(), DYED_PROPERTY,
                     (stack, level, entity, seed) -> StationColor.of(stack).isDyed() ? 1.0F : 0.0F);
             ItemProperties.register(ModBlocks.CRAFTING_STATION_SLAB.get().asItem(), DYED_PROPERTY,

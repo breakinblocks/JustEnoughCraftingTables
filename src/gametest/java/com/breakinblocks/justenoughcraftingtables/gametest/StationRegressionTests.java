@@ -16,7 +16,6 @@ import com.breakinblocks.justenoughcraftingtables.net.NetCodecs;
 import com.breakinblocks.justenoughcraftingtables.net.SummaryPayload;
 import com.breakinblocks.justenoughcraftingtables.net.ViewPayload;
 import com.breakinblocks.justenoughcraftingtables.registry.ModBlocks;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.List;
 import java.util.Optional;
@@ -24,11 +23,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.VarInt;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -36,21 +34,20 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
 
 // Regression coverage for access control, recipe reloads, transfer planning and inventory summaries.
 @GameTestHolder(JustEnoughCraftingTables.MOD_ID)
@@ -60,16 +57,16 @@ public final class StationRegressionTests {
 
     @SuppressWarnings("removal")
     private static ServerPlayer player(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        Vec3 centre = helper.absolutePos(STATION.south()).getBottomCenter();
-        player.teleportTo(helper.getLevel(), centre.x, centre.y, centre.z, 0.0F, 0.0F);
+        ServerPlayer player = TestSupport.serverPlayer(helper);
+        Vec3 centre = Vec3.atBottomCenterOf(helper.absolutePos(STATION.south()));
+        player.setPos(centre.x, centre.y, centre.z);
         player.getInventory().clearContent();
         return player;
     }
 
     private static StationBlockEntity station(GameTestHelper helper) {
         helper.setBlock(STATION, ModBlocks.CRAFTING_STATION.get());
-        return helper.getBlockEntity(STATION);
+        return (StationBlockEntity) helper.getBlockEntity(STATION);
     }
 
     private static void finish(GameTestHelper helper, ServerPlayer player, StationMenu menu) {
@@ -82,10 +79,10 @@ public final class StationRegressionTests {
     public static void lockedChestIsNotExposed(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         CompoundTag tag = new CompoundTag();
         tag.putString("Lock", "secret-key");
-        chest.loadCustomOnly(tag, helper.getLevel().registryAccess());
+        chest.load(tag);
         chest.setItem(0, new ItemStack(Items.DIAMOND));
         ServerPlayer player = player(helper);
         helper.assertTrue(!chest.canOpen(player), "Probe player unexpectedly has the chest key");
@@ -99,16 +96,16 @@ public final class StationRegressionTests {
     public static void spectatorLeavesLootUngenerated(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
-        chest.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON);
-        Player player = helper.makeMockPlayer(GameType.SPECTATOR);
-        Vec3 centre = helper.absolutePos(STATION.south()).getBottomCenter();
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
+        chest.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON, 0L);
+        Player player = TestSupport.spectator(helper);
+        Vec3 centre = Vec3.atBottomCenterOf(helper.absolutePos(STATION.south()));
         player.setPos(centre.x, centre.y, centre.z);
         helper.assertTrue(!chest.canOpen(player), "Spectator unexpectedly allowed to open ungenerated loot");
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
-        helper.assertTrue(chest.getLootTable() != null, "Loot unexpectedly generated before scan");
+        helper.assertTrue(chest.saveWithoutMetadata().contains("LootTable"), "Loot unexpectedly generated before scan");
         menu.broadcastChanges();
-        helper.assertTrue(chest.getLootTable() != null, "Spectator generated unopened loot");
+        helper.assertTrue(chest.saveWithoutMetadata().contains("LootTable"), "Spectator generated unopened loot");
         menu.removed(player);
         helper.succeed();
     }
@@ -119,12 +116,12 @@ public final class StationRegressionTests {
         station.setGridItem(0, new ItemStack(Items.OAK_LOG));
         ServerPlayer player = player(helper);
         RecipeManager manager = helper.getLevel().getRecipeManager();
-        List<RecipeHolder<?>> original = List.copyOf(manager.getRecipes());
+        List<Recipe<?>> original = List.copyOf(manager.getRecipes());
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
-        RecipeHolder<CraftingRecipe> recipe = manager.getRecipeFor(RecipeType.CRAFTING, menu.craftingGrid().asCraftInput(), helper.getLevel()).orElseThrow();
+        CraftingRecipe recipe = manager.getRecipeFor(RecipeType.CRAFTING, menu.craftingGrid(), helper.getLevel()).orElseThrow();
         try {
-            manager.replaceRecipes(original.stream().filter(holder -> !holder.id().equals(recipe.id())).toList());
-            helper.assertTrue(manager.getRecipeFor(RecipeType.CRAFTING, menu.craftingGrid().asCraftInput(), helper.getLevel()).isEmpty(), "Recipe removal setup failed");
+            manager.replaceRecipes(original.stream().filter(holder -> !holder.getId().equals(recipe.getId())).toList());
+            helper.assertTrue(manager.getRecipeFor(RecipeType.CRAFTING, menu.craftingGrid(), helper.getLevel()).isEmpty(), "Recipe removal setup failed");
             helper.assertTrue(!menu.verifyResult(), "Removed recipe passed verification");
             menu.clicked(StationMenu.RESULT_SLOT, 0, ClickType.PICKUP, player);
             helper.assertTrue(menu.getCarried().isEmpty() && station.getGridItem(0).is(Items.OAK_LOG), "Removed recipe was crafted");
@@ -145,7 +142,7 @@ public final class StationRegressionTests {
         player.getInventory().setItem(9, new ItemStack(Items.OAK_LOG));
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
         StationOperations.FillResult result = StationOperations.fill(menu, List.of(new ItemStack(Items.OAK_LOG)), 1);
-        helper.assertValueEqual(result, StationOperations.FillResult.FILLED, "Fill should use space freed by extraction");
+        TestSupport.assertValueEqual(helper, result, StationOperations.FillResult.FILLED, "Fill should use space freed by extraction");
         finish(helper, player, menu);
     }
 
@@ -172,7 +169,7 @@ public final class StationRegressionTests {
         int entries = 0;
         for (int i = 0; i < 40; i++) {
             ItemStack stack = new ItemStack(Items.PAPER);
-            stack.set(DataComponents.CUSTOM_NAME, Component.literal("version-" + i));
+            stack.setHoverName(Component.literal("version-" + i));
             handler.setStackInSlot(0, stack);
             tracker.tick(1, 1);
             SummaryPayload payload = tracker.drain(1);
@@ -189,7 +186,7 @@ public final class StationRegressionTests {
     public static void filteredViewRejectsReplacedStacks(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         chest.setItem(0, new ItemStack(Items.OAK_PLANKS));
         ServerPlayer player = player(helper);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
@@ -202,7 +199,7 @@ public final class StationRegressionTests {
         helper.assertTrue(menu.windowSlot(0).getItem().isEmpty(), "Non-matching replacement leaked into filter");
         helper.runAfterDelay(2, () -> {
             menu.handleViewRequest(2, menu.sidesVersion(), request);
-            helper.assertValueEqual(menu.windowIndex(0), 1, "Moved matching item was not remapped");
+            TestSupport.assertValueEqual(helper, menu.windowIndex(0), 1, "Moved matching item was not remapped");
             finish(helper, player, menu);
         });
     }
@@ -227,17 +224,17 @@ public final class StationRegressionTests {
     public static void accessRevokedDuringOpenMenu(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         CompoundTag tag = new CompoundTag();
         tag.putString("Lock", "secret-key");
-        chest.loadCustomOnly(tag, helper.getLevel().registryAccess());
+        chest.load(tag);
         chest.setItem(0, new ItemStack(Items.DIAMOND));
         ServerPlayer player = player(helper);
         ItemStack key = new ItemStack(Items.STICK);
-        key.set(DataComponents.CUSTOM_NAME, Component.literal("secret-key"));
+        key.setHoverName(Component.literal("secret-key"));
         player.getInventory().setItem(0, key);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
-        Source source = menu.sources(SourceOrder.CONNECTED_FIRST).getFirst();
+        Source source = menu.sources(SourceOrder.CONNECTED_FIRST).get(0);
         helper.assertTrue(source.handler().getStackInSlot(0).is(Items.DIAMOND), "Key did not grant access");
         player.getInventory().setItem(0, ItemStack.EMPTY);
         helper.assertTrue(source.handler().extractItem(0, 1, false).isEmpty(), "Retained source bypassed revoked access");
@@ -250,7 +247,7 @@ public final class StationRegressionTests {
     public static void protectionEventDeniesInventory(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         chest.setItem(0, new ItemStack(Items.DIAMOND));
         ServerPlayer player = player(helper);
         Consumer<StationAccessEvent> deny = event -> {
@@ -258,13 +255,13 @@ public final class StationRegressionTests {
                 event.setCanceled(true);
             }
         };
-        NeoForge.EVENT_BUS.addListener(deny);
+        MinecraftForge.EVENT_BUS.addListener(deny);
         try {
             StationMenu menu = new StationMenu(1, player.getInventory(), station);
             helper.assertTrue(menu.sides().isEmpty(), "Protection veto did not hide inventory");
             finish(helper, player, menu);
         } finally {
-            NeoForge.EVENT_BUS.unregister(deny);
+            MinecraftForge.EVENT_BUS.unregister(deny);
         }
     }
 
@@ -276,15 +273,15 @@ public final class StationRegressionTests {
         tracker.bind(Direction.NORTH, handler);
         for (int i = 0; i < 40; i++) {
             ItemStack stack = new ItemStack(Items.PAPER);
-            stack.set(DataComponents.CUSTOM_NAME, Component.literal("variant-" + i));
+            stack.setHoverName(Component.literal("variant-" + i));
             handler.setStackInSlot(0, stack);
             tracker.tick(1, 1);
             SummaryPayload payload = tracker.drain(1);
             if (payload != null) {
                 client.apply(payload);
             }
-            helper.assertValueEqual(client.matching(item -> true).size(), 1, "Client retained retired dictionary entries");
-            helper.assertValueEqual(client.total(Direction.NORTH, stack), 1L, "Replacement entry total was lost");
+            TestSupport.assertValueEqual(helper, client.matching(item -> true).size(), 1, "Client retained retired dictionary entries");
+            TestSupport.assertValueEqual(helper, client.total(Direction.NORTH, stack), 1L, "Replacement entry total was lost");
         }
         helper.succeed();
     }
@@ -302,10 +299,10 @@ public final class StationRegressionTests {
         for (int i = 2; i < 100; i++) {
             menu.handleViewRequest(i, menu.sidesVersion(), east);
         }
-        helper.assertValueEqual(menu.selectedSide(), Direction.NORTH, "Flood applied multiple requests within one tick");
+        TestSupport.assertValueEqual(helper, menu.selectedSide(), Direction.NORTH, "Flood applied multiple requests within one tick");
         helper.runAfterDelay(1, () -> {
             menu.broadcastChanges();
-            helper.assertValueEqual(menu.selectedSide(), Direction.EAST, "Newest request was not applied next tick");
+            TestSupport.assertValueEqual(helper, menu.selectedSide(), Direction.EAST, "Newest request was not applied next tick");
             finish(helper, player, menu);
         });
     }
@@ -335,12 +332,12 @@ public final class StationRegressionTests {
         };
         StationOperations.FillResult result = StationOperations.fill(menu,
                 List.of(new ItemStack(Items.OAK_PLANKS), new ItemStack(Items.OAK_PLANKS)), 64);
-        helper.assertValueEqual(result, StationOperations.FillResult.NOT_ENOUGH, "Partial extraction was accepted");
+        TestSupport.assertValueEqual(helper, result, StationOperations.FillResult.NOT_ENOUGH, "Partial extraction was accepted");
         long total = handler.getStackInSlot(0).getCount();
         for (int i = 0; i < 36; i++) {
             total += player.getInventory().getItem(i).getCount();
         }
-        helper.assertValueEqual(total, 128L, "Failed fill changed the total item count");
+        TestSupport.assertValueEqual(helper, total, 128L, "Failed fill changed the total item count");
         helper.assertTrue(station.isGridEmpty(), "Failed fill wrote a partial grid");
         finish(helper, player, menu);
     }
@@ -350,10 +347,10 @@ public final class StationRegressionTests {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST.defaultBlockState().setValue(ChestBlock.TYPE, ChestType.LEFT));
         helper.setBlock(STATION.north().east(), Blocks.CHEST.defaultBlockState().setValue(ChestBlock.TYPE, ChestType.RIGHT));
-        ChestBlockEntity partner = helper.getBlockEntity(STATION.north().east());
+        ChestBlockEntity partner = (ChestBlockEntity) helper.getBlockEntity(STATION.north().east());
         CompoundTag locked = new CompoundTag();
         locked.putString("Lock", "other-half-key");
-        partner.loadCustomOnly(locked, helper.getLevel().registryAccess());
+        partner.load(locked);
         partner.setItem(0, new ItemStack(Items.DIAMOND));
         ServerPlayer player = player(helper);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
@@ -366,7 +363,7 @@ public final class StationRegressionTests {
         StationBlockEntity station = station(helper);
         station.setGridItem(0, new ItemStack(Items.OAK_LOG));
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         chest.setItem(0, new ItemStack(Items.DIAMOND));
         ServerPlayer player = player(helper);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
@@ -390,7 +387,7 @@ public final class StationRegressionTests {
             b.clicked(StationMenu.RESULT_SLOT, 0, ClickType.PICKUP, second);
             b.quickMoveStack(second, StationMenu.RESULT_SLOT);
         }
-        helper.assertValueEqual(a.getCarried().getCount(), 4, "First craft produced an unexpected amount");
+        TestSupport.assertValueEqual(helper, a.getCarried().getCount(), 4, "First craft produced an unexpected amount");
         helper.assertTrue(b.getCarried().isEmpty() && station.isGridEmpty(), "Shared output was taken twice");
         for (int i = 0; i < 36; i++) {
             helper.assertTrue(second.getInventory().getItem(i).isEmpty(), "Second viewer duplicated a stale output");
@@ -410,13 +407,13 @@ public final class StationRegressionTests {
             menu.handleFill(new FillRecipePayload(1,
                     List.of(new ItemStack(Items.OAK_PLANKS)), 1));
         }
-        helper.assertValueEqual(station.getGridItem(0).getCount(), 1, "Replayed fill changed grid count");
-        helper.assertValueEqual(player.getInventory().getItem(9).getCount(), 63, "Replayed fill changed inventory count");
+        TestSupport.assertValueEqual(helper, station.getGridItem(0).getCount(), 1, "Replayed fill changed grid count");
+        TestSupport.assertValueEqual(helper, player.getInventory().getItem(9).getCount(), 63, "Replayed fill changed inventory count");
         ItemStack forged = new ItemStack(Items.OAK_PLANKS);
-        forged.set(DataComponents.CUSTOM_NAME, Component.literal("forged-components"));
-        helper.assertValueEqual(StationOperations.fill(menu, List.of(forged), 1), StationOperations.FillResult.NOT_ENOUGH,
+        forged.setHoverName(Component.literal("forged-components"));
+        TestSupport.assertValueEqual(helper, StationOperations.fill(menu, List.of(forged), 1), StationOperations.FillResult.NOT_ENOUGH,
                 "Client-supplied components were created without a matching source");
-        helper.assertTrue(station.getGridItem(0).getComponentsPatch().isEmpty(), "Forged components reached the grid");
+        helper.assertTrue(!station.getGridItem(0).hasTag(), "Forged components reached the grid");
         finish(helper, player, menu);
     }
 
@@ -424,7 +421,7 @@ public final class StationRegressionTests {
     public static void multiSlotDragConservesItems(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         ServerPlayer player = player(helper);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
         menu.setCarried(new ItemStack(Items.COBBLESTONE, 63));
@@ -436,9 +433,9 @@ public final class StationRegressionTests {
         for (int i = 0; i < chest.getContainerSize(); i++) {
             total += chest.getItem(i).getCount();
         }
-        helper.assertValueEqual(total, 63, "Drag distribution lost or duplicated items");
-        helper.assertValueEqual(chest.getItem(0).getCount(), 31, "First drag slot received wrong amount");
-        helper.assertValueEqual(chest.getItem(1).getCount(), 31, "Second drag slot received wrong amount");
+        TestSupport.assertValueEqual(helper, total, 63, "Drag distribution lost or duplicated items");
+        TestSupport.assertValueEqual(helper, chest.getItem(0).getCount(), 31, "First drag slot received wrong amount");
+        TestSupport.assertValueEqual(helper, chest.getItem(1).getCount(), 31, "Second drag slot received wrong amount");
         finish(helper, player, menu);
     }
 
@@ -475,18 +472,18 @@ public final class StationRegressionTests {
         for (int i = 0; i < 36; i++) {
             total += player.getInventory().getItem(i).getCount();
         }
-        helper.assertValueEqual(total, 128, "Exception refund duplicated or lost inputs");
+        TestSupport.assertValueEqual(helper, total, 128, "Exception refund duplicated or lost inputs");
         helper.assertTrue(station.isGridEmpty(), "Exception left a partial output grid");
         finish(helper, player, menu);
     }
 
     @GameTest(template = "empty")
     public static void malformedIdDeltasAreRejected(GameTestHelper helper) {
-        ByteBuf buffer = Unpooled.buffer();
+        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
         try {
-            VarInt.write(buffer, 2);
-            VarInt.write(buffer, Integer.MAX_VALUE);
-            VarInt.write(buffer, 0);
+            buffer.writeVarInt(2);
+            buffer.writeVarInt(Integer.MAX_VALUE);
+            buffer.writeVarInt(0);
             boolean rejected = false;
             try {
                 NetCodecs.SORTED_IDS.decode(buffer);
@@ -510,7 +507,7 @@ public final class StationRegressionTests {
         menu.clicked(-999, 1, ClickType.QUICK_CRAFT, player);
         menu.clicked(StationMenu.GRID_START, 9, ClickType.QUICK_CRAFT, player);
         menu.clicked(-999, 10, ClickType.QUICK_CRAFT, player);
-        helper.assertValueEqual(menu.getCarried().getCount(), 32, "Malformed drag changed the cursor");
+        TestSupport.assertValueEqual(helper, menu.getCarried().getCount(), 32, "Malformed drag changed the cursor");
         helper.assertTrue(station.isGridEmpty(), "Malformed drag created items in the grid");
         finish(helper, player, menu);
     }
@@ -542,9 +539,9 @@ public final class StationRegressionTests {
         menu.clicked(StationMenu.WINDOW_START + 1, 1, ClickType.QUICK_CRAFT, player);
         menu.clicked(-999, 2, ClickType.QUICK_CRAFT, player);
         int total = menu.getCarried().getCount() + handler.getStackInSlot(0).getCount() + handler.getStackInSlot(1).getCount();
-        helper.assertValueEqual(total, 63, "Changed insertion acceptance lost or duplicated items");
-        helper.assertValueEqual(handler.getStackInSlot(1).getCount(), 1, "Handler restriction was bypassed");
-        helper.assertValueEqual(menu.getCarried().getCount(), 31, "Rejected insertion was not refunded exactly once");
+        TestSupport.assertValueEqual(helper, total, 63, "Changed insertion acceptance lost or duplicated items");
+        TestSupport.assertValueEqual(helper, handler.getStackInSlot(1).getCount(), 1, "Handler restriction was bypassed");
+        TestSupport.assertValueEqual(helper, menu.getCarried().getCount(), 31, "Rejected insertion was not refunded exactly once");
         finish(helper, player, menu);
     }
 
@@ -552,17 +549,17 @@ public final class StationRegressionTests {
     public static void retainedSourceCannotBypassHiddenOrRemovedStation(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
         chest.setItem(0, new ItemStack(Items.DIAMOND, 2));
         ServerPlayer player = player(helper);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
-        Source source = menu.sources(SourceOrder.CONNECTED_FIRST).getFirst();
+        Source source = menu.sources(SourceOrder.CONNECTED_FIRST).get(0);
         station.toggleHidden(Direction.NORTH);
         helper.assertTrue(source.handler().extractItem(0, 1, false).isEmpty(), "Retained source bypassed hidden side");
         station.toggleHidden(Direction.NORTH);
         helper.setBlock(STATION, Blocks.AIR);
         helper.assertTrue(source.handler().extractItem(0, 1, false).isEmpty(), "Retained source bypassed removed station");
-        helper.assertValueEqual(chest.getItem(0).getCount(), 2, "Retained source changed chest contents");
+        TestSupport.assertValueEqual(helper, chest.getItem(0).getCount(), 2, "Retained source changed chest contents");
         finish(helper, player, menu);
     }
 
@@ -571,12 +568,12 @@ public final class StationRegressionTests {
         StationBlockEntity station = station(helper);
         station.toggleHidden(Direction.NORTH);
         helper.setBlock(STATION.north(), Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(STATION.north());
-        chest.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON);
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(STATION.north());
+        chest.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON, 0L);
         ServerPlayer player = player(helper);
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
         menu.broadcastChanges();
-        helper.assertTrue(chest.getLootTable() != null, "Hidden inventory generated loot during discovery");
+        helper.assertTrue(chest.saveWithoutMetadata().contains("LootTable"), "Hidden inventory generated loot during discovery");
         finish(helper, player, menu);
     }
 

@@ -30,9 +30,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeHolder;
 
-public class StationTransferHandler implements IRecipeTransferHandler<StationMenu, RecipeHolder<CraftingRecipe>> {
+public class StationTransferHandler implements IRecipeTransferHandler<StationMenu, CraftingRecipe> {
     private static final Component MISSING = Component.translatable("jei.tooltip.error.recipe.transfer.missing");
 
     private final IRecipeTransferHandlerHelper helper;
@@ -52,13 +51,13 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
     }
 
     @Override
-    public RecipeType<RecipeHolder<CraftingRecipe>> getRecipeType() {
+    public RecipeType<CraftingRecipe> getRecipeType() {
         return RecipeTypes.CRAFTING;
     }
 
     @Nullable
     @Override
-    public IRecipeTransferError transferRecipe(IRecipeTransferContext<RecipeHolder<CraftingRecipe>, StationMenu> context, boolean doTransfer) {
+    public IRecipeTransferError transferRecipe(IRecipeTransferContext<CraftingRecipe, StationMenu> context, boolean doTransfer) {
         IRecipeTransferError error = transfer(context.getContainer(), context.getRecipe(), context.getRecipeSlots(), context.isMaxTransfer(), doTransfer);
         if (doTransfer) {
             context.completeRecipeTransfer(error == null ? RecipeTransferResult.SUCCESS : RecipeTransferResult.REJECTED);
@@ -70,13 +69,13 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
     @Override
     @SuppressWarnings("removal")
     public IRecipeTransferError transferRecipe(
-            StationMenu container, RecipeHolder<CraftingRecipe> recipe, IRecipeSlotsView recipeSlots, Player player, boolean maxTransfer, boolean doTransfer) {
+            StationMenu container, CraftingRecipe recipe, IRecipeSlotsView recipeSlots, Player player, boolean maxTransfer, boolean doTransfer) {
         return transfer(container, recipe, recipeSlots, maxTransfer, doTransfer);
     }
 
     @Nullable
     private IRecipeTransferError transfer(
-            StationMenu menu, RecipeHolder<CraftingRecipe> recipe, IRecipeSlotsView recipeSlots, boolean maxTransfer, boolean doTransfer) {
+            StationMenu menu, CraftingRecipe recipe, IRecipeSlotsView recipeSlots, boolean maxTransfer, boolean doTransfer) {
         if (!menu.isClientSide()) {
             return helper.createInternalError();
         }
@@ -108,7 +107,7 @@ public class StationTransferHandler implements IRecipeTransferHandler<StationMen
     }
 
     @Nullable
-    private Map<Integer, Ingredient> ingredientMap(RecipeHolder<CraftingRecipe> recipe, List<IRecipeSlotView> inputs) {
+    private Map<Integer, Ingredient> ingredientMap(CraftingRecipe recipe, List<IRecipeSlotView> inputs) {
         Map<Integer, Ingredient> map;
         try {
             map = helper.getGuiSlotIndexToIngredientMap(recipe);

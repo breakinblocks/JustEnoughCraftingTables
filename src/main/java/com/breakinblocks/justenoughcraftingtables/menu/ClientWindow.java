@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public final class ClientWindow {
     public static final int SIZE = 54;
@@ -270,7 +270,7 @@ public final class ClientWindow {
                 return stack;
             }
             ItemStack current = stacks[slot];
-            if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, stack)) {
+            if (!current.isEmpty() && !ItemStack.isSameItemSameTags(current, stack)) {
                 return stack;
             }
             int limit = stack.getMaxStackSize();

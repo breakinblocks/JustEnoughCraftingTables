@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 
 public final class PolymorphIntegration {
     private PolymorphIntegration() {
@@ -22,17 +21,17 @@ public final class PolymorphIntegration {
 
     public static void register() {
         StationRecipes.setLookup(PolymorphIntegration::find);
-        NeoForge.EVENT_BUS.addListener(PolymorphIntegration::onContainerOpen);
+        MinecraftForge.EVENT_BUS.addListener(PolymorphIntegration::onContainerOpen);
     }
 
-    private static Optional<RecipeHolder<CraftingRecipe>> find(
-            StationMenu menu, ServerPlayer player, CraftingInput input, Level level, @Nullable RecipeHolder<CraftingRecipe> last) {
-        IPlayerRecipeData data = PolymorphApi.getInstance().getPlayerRecipeData(player);
+    private static Optional<CraftingRecipe> find(
+            StationMenu menu, ServerPlayer player, CraftingContainer input, Level level, @Nullable CraftingRecipe last) {
+        IPlayerRecipeData data = PolymorphApi.common().getRecipeData(player).orElse(null);
         if (data == null) {
             return StationRecipes.VANILLA.find(menu, player, input, level, last);
         }
         data.setContainerMenu(menu);
-        return Optional.ofNullable(data.getRecipe(RecipeType.CRAFTING, input, level, new ArrayList<>()));
+        return data.getRecipe(RecipeType.CRAFTING, input, level, new ArrayList<>());
     }
 
     private static void onContainerOpen(PlayerContainerEvent.Open event) {

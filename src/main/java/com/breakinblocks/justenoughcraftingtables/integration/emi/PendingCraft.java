@@ -8,8 +8,8 @@ import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 
 final class PendingCraft {
     private static final int TIMEOUT_TICKS = 40;
@@ -29,7 +29,7 @@ final class PendingCraft {
     static void schedule(StationMenu target, List<ItemStack> pattern, ClickType type) {
         if (!listening) {
             listening = true;
-            NeoForge.EVENT_BUS.addListener(PendingCraft::onClientTick);
+            MinecraftForge.EVENT_BUS.addListener(PendingCraft::onClientTick);
         }
         menu = new WeakReference<>(target);
         templates = List.copyOf(pattern);
@@ -42,7 +42,8 @@ final class PendingCraft {
         templates = List.of();
     }
 
-    private static void onClientTick(ClientTickEvent.Post event) {
+    private static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
         if (menu == null) {
             return;
         }

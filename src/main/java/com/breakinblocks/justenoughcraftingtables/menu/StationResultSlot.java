@@ -6,8 +6,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
-import net.neoforged.neoforge.common.CommonHooks;
+import net.minecraftforge.common.ForgeHooks;
 
 public class StationResultSlot extends ResultSlot {
     private final StationMenu menu;
@@ -32,24 +31,23 @@ public class StationResultSlot extends ResultSlot {
         if (menu.isClientSide()) {
             return;
         }
-        CraftingInput.Positioned positioned = grid.asPositionedCraftInput();
-        CraftingInput input = positioned.input();
-        int left = positioned.left();
-        int top = positioned.top();
-        CommonHooks.setCraftingPlayer(taker);
+        CraftingContainer input = grid;
+        int left = 0;
+        int top = 0;
+        ForgeHooks.setCraftingPlayer(taker);
         NonNullList<ItemStack> remaining;
         try {
             remaining = menu.remainingItems(input);
         } finally {
-            CommonHooks.setCraftingPlayer(null);
+            ForgeHooks.setCraftingPlayer(null);
         }
         menu.beginGridBatch();
         try {
-            for (int row = 0; row < input.height(); row++) {
-                for (int col = 0; col < input.width(); col++) {
+            for (int row = 0; row < input.getHeight(); row++) {
+                for (int col = 0; col < input.getWidth(); col++) {
                     int slot = col + left + (row + top) * grid.getWidth();
                     ItemStack current = grid.getItem(slot);
-                    ItemStack remainder = remaining.get(col + row * input.width());
+                    ItemStack remainder = remaining.get(col + row * input.getWidth());
                     Origin consumedOrigin = Origin.PLAYER;
                     if (!current.isEmpty()) {
                         Origin newest = menu.gridOrigins().newest(slot);
@@ -66,7 +64,7 @@ public class StationResultSlot extends ResultSlot {
                     if (current.isEmpty()) {
                         grid.setItem(slot, remainder);
                         menu.gridOrigins().append(slot, remainder, consumedOrigin, remainder.getCount());
-                    } else if (ItemStack.isSameItemSameComponents(current, remainder)) {
+                    } else if (ItemStack.isSameItemSameTags(current, remainder)) {
                         int added = remainder.getCount();
                         remainder.grow(current.getCount());
                         grid.setItem(slot, remainder);

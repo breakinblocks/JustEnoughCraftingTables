@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public final class PlannedHandler {
     private final IItemHandler handler;
@@ -35,8 +35,8 @@ public final class PlannedHandler {
                 ItemStack planned = inserts.get(slot);
                 ItemStack current = handler.getStackInSlot(slot);
                 boolean matches = planned != null
-                        ? ItemStack.isSameItemSameComponents(planned, stack)
-                        : !current.isEmpty() && ItemStack.isSameItemSameComponents(current, stack);
+                        ? ItemStack.isSameItemSameTags(planned, stack)
+                        : !current.isEmpty() && ItemStack.isSameItemSameTags(current, stack);
                 if (matches) {
                     left -= acceptMore(slot, stack, left);
                 }
@@ -68,7 +68,7 @@ public final class PlannedHandler {
             return 0;
         }
         ItemStack current = handler.getStackInSlot(slot);
-        if (current.isEmpty() || !ItemStack.isSameItemSameComponents(current, template)) {
+        if (current.isEmpty() || !ItemStack.isSameItemSameTags(current, template)) {
             return 0;
         }
         if (extracts.containsKey(slot)) {
@@ -77,7 +77,7 @@ public final class PlannedHandler {
         int wanted = Math.min(count, current.getCount());
         int probeSize = Math.min(wanted, Math.max(1, template.getMaxStackSize()));
         ItemStack probe = handler.extractItem(slot, probeSize, true);
-        if (probe.isEmpty() || !ItemStack.isSameItemSameComponents(probe, template)) {
+        if (probe.isEmpty() || !ItemStack.isSameItemSameTags(probe, template)) {
             return 0;
         }
         if (probe.getCount() < probeSize) {
@@ -95,7 +95,7 @@ public final class PlannedHandler {
             if (extracted.isEmpty()) {
                 break;
             }
-            if (!ItemStack.isSameItemSameComponents(extracted, template)) {
+            if (!ItemStack.isSameItemSameTags(extracted, template)) {
                 taken.add(extracted);
                 break;
             }

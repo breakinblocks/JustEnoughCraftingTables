@@ -1,13 +1,10 @@
 package com.breakinblocks.justenoughcraftingtables.common.block;
 
-import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.Nullable;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.BlockItemStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 public enum StationColor implements StringRepresentable {
@@ -56,7 +53,9 @@ public enum StationColor implements StringRepresentable {
     }
 
     public int tint() {
-        return dye == null ? 0xFFFFFFFF : dye.getTextureDiffuseColor();
+        if (dye == null) return 0xFFFFFFFF;
+        float[] rgb = dye.getTextureDiffuseColors();
+        return 0xFF000000 | ((int) (rgb[0] * 255) << 16) | ((int) (rgb[1] * 255) << 8) | (int) (rgb[2] * 255);
     }
 
     public static StationColor of(@Nullable DyeColor dye) {
@@ -72,26 +71,22 @@ public enum StationColor implements StringRepresentable {
     }
 
     public static StationColor of(ItemStack stack) {
-        BlockItemStateProperties properties = stack.get(DataComponents.BLOCK_STATE);
-        if (properties == null) {
-            return NONE;
+        CompoundTag tag = stack.getTagElement("BlockStateTag");
+        if (tag == null) return NONE;
+        String name = tag.getString(PROPERTY.getName());
+        for (StationColor color : values()) {
+            if (color.getSerializedName().equals(name)) return color;
         }
-        StationColor color = properties.get(PROPERTY);
-        return color == null ? NONE : color;
+        return NONE;
     }
 
     public static ItemStack apply(ItemStack stack, StationColor color) {
-        BlockItemStateProperties properties = stack.getOrDefault(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY);
-        Map<String, String> map = new HashMap<>(properties.properties());
+        CompoundTag properties = stack.getOrCreateTagElement("BlockStateTag");
         if (color == NONE) {
-            map.remove(PROPERTY.getName());
+            properties.remove(PROPERTY.getName());
+            if (properties.isEmpty()) stack.removeTagKey("BlockStateTag");
         } else {
-            map.put(PROPERTY.getName(), color.getSerializedName());
-        }
-        if (map.isEmpty()) {
-            stack.remove(DataComponents.BLOCK_STATE);
-        } else {
-            stack.set(DataComponents.BLOCK_STATE, new BlockItemStateProperties(Map.copyOf(map)));
+            properties.putString(PROPERTY.getName(), color.getSerializedName());
         }
         return stack;
     }

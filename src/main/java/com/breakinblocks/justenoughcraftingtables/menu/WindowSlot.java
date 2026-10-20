@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public class WindowSlot extends Slot {
     private final StationMenu menu;
@@ -58,7 +58,7 @@ public class WindowSlot extends Slot {
             return false;
         }
         ItemStack current = handler.getStackInSlot(real);
-        if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, stack)) {
+        if (!current.isEmpty() && !ItemStack.isSameItemSameTags(current, stack)) {
             return false;
         }
         return handler.isItemValid(real, stack);
@@ -95,7 +95,7 @@ public class WindowSlot extends Slot {
         }
         ItemStack current = handler.getStackInSlot(real);
         int max = stack.getMaxStackSize();
-        if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, stack)) {
+        if (!current.isEmpty() && !ItemStack.isSameItemSameTags(current, stack)) {
             return Math.min(max, current.getCount());
         }
         ItemStack remainder = handler.insertItem(real, stack.copyWithCount(max), true);

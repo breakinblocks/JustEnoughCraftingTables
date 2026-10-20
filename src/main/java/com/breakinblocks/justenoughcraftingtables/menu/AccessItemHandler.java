@@ -2,7 +2,7 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 
 import java.util.function.BooleanSupplier;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 /** Retained source references must recheck access at the point of each operation. */
 final class AccessItemHandler implements IItemHandler {

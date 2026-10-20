@@ -1,29 +1,17 @@
 package com.breakinblocks.justenoughcraftingtables.net;
 
-import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import com.breakinblocks.justenoughcraftingtables.menu.SideEntry;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.Direction;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public record SidesPayload(int containerId, int version, List<SideEntry> sides, Optional<Direction> selected, boolean viewReset)
-        implements CustomPacketPayload {
-    public static final Type<SidesPayload> TYPE = new Type<>(JustEnoughCraftingTables.id("sides"));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, SidesPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, SidesPayload::containerId,
-            ByteBufCodecs.VAR_INT, SidesPayload::version,
-            SideEntry.LIST_STREAM_CODEC, SidesPayload::sides,
-            NetCodecs.OPTIONAL_DIRECTION, SidesPayload::selected,
-            ByteBufCodecs.BOOL, SidesPayload::viewReset,
-            SidesPayload::new);
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+public record SidesPayload(int containerId, int version, List<SideEntry> sides, Optional<Direction> selected, boolean viewReset) implements StationPacket {
+    public static final PacketCodec<SidesPayload> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+        buffer.writeVarInt(payload.containerId());
+        buffer.writeVarInt(payload.version());
+        SideEntry.LIST_STREAM_CODEC.encode(buffer, payload.sides());
+        NetCodecs.OPTIONAL_DIRECTION.encode(buffer, payload.selected());
+        buffer.writeBoolean(payload.viewReset());
+    }, buffer -> new SidesPayload(buffer.readVarInt(), buffer.readVarInt(), SideEntry.LIST_STREAM_CODEC.decode(buffer),
+            NetCodecs.OPTIONAL_DIRECTION.decode(buffer), buffer.readBoolean()));
 }

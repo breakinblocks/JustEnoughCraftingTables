@@ -10,7 +10,7 @@ import com.breakinblocks.justenoughcraftingtables.menu.ServerView;
 import com.breakinblocks.justenoughcraftingtables.menu.SideEntry;
 import com.breakinblocks.justenoughcraftingtables.menu.SourceOrder;
 import com.breakinblocks.justenoughcraftingtables.menu.StationMenu;
-import com.breakinblocks.justenoughcraftingtables.menu.WindowSlot;
+import com.breakinblocks.justenoughcraftingtables.net.ModNetwork;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +29,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.fml.ModList;
 import org.lwjgl.glfw.GLFW;
 
 public class StationScreen extends AbstractContainerScreen<StationMenu> implements SideTabButton.Owner {
@@ -468,7 +467,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     }
 
     private void request(@Nullable Direction side, int page, int first, boolean rebuild) {
-        menu.requestView(side, page, first, filterIds, rebuild, PacketDistributor::sendToServer);
+        menu.requestView(side, page, first, filterIds, rebuild, ModNetwork::sendToServer);
     }
 
     @Override
@@ -636,7 +635,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         if (panelShown() && window().displaySide() != null && scrollY != 0) {
             if (hasShiftDown() && overPanel(mouseX, mouseY)) {
                 changePage(scrollY > 0 ? -1 : 1);
@@ -647,7 +646,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
                 return true;
             }
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
     }
 
     private double mouseX() {
@@ -755,20 +754,20 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
             return;
         }
         int px = leftPos + panelX();
-        guiGraphics.blitSprite(footerShown() ? PANEL_TALL : PANEL, px, topPos, PANEL_WIDTH, panelHeight());
+        GuiSprites.blit(guiGraphics, footerShown() ? PANEL_TALL : PANEL, px, topPos, PANEL_WIDTH, panelHeight());
         ClientWindow window = window();
         boolean scrollbar = scrollbarShown();
         int x0 = leftPos + StationMenu.windowX(panelX(), scrollbar);
         for (int k = 0; k < ClientWindow.SIZE; k++) {
             if (window.active(k) || window.previewSlot(k, menu.pageSize())) {
-                guiGraphics.blitSprite(SLOT, x0 - 1 + 18 * (k % 6), topPos + 16 + 18 * (k / 6), 18, 18);
+                GuiSprites.blit(guiGraphics, SLOT, x0 - 1 + 18 * (k % 6), topPos + 16 + 18 * (k / 6), 18, 18);
             }
         }
         if (scrollbar) {
-            guiGraphics.blitSprite(SCROLLBAR_TRACK, px + 113, topPos + 16, 14, 162);
+            GuiSprites.blit(guiGraphics, SCROLLBAR_TRACK, px + 113, topPos + 16, 14, 162);
             int maxFirst = ServerView.maxFirst(displayPageLength());
             float fraction = maxFirst == 0 ? 0.0F : (float) window.displayFirst() / maxFirst;
-            guiGraphics.blitSprite(SCROLLER, px + 114, topPos + 17 + Mth.floor(145 * fraction), 12, 15);
+            GuiSprites.blit(guiGraphics, SCROLLER, px + 114, topPos + 17 + Mth.floor(145 * fraction), 12, 15);
         }
         if (window.pending()) {
             for (int k = 0; k < ClientWindow.SIZE; k++) {
@@ -809,11 +808,4 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
         return null;
     }
 
-    @Override
-    protected void renderSlotContents(GuiGraphics guiGraphics, ItemStack itemstack, Slot slot, @Nullable String countString) {
-        if (countString == null && slot instanceof WindowSlot) {
-            countString = countText(itemstack);
-        }
-        super.renderSlotContents(guiGraphics, itemstack, slot, countString);
-    }
 }

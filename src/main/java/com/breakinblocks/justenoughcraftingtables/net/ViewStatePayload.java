@@ -1,40 +1,29 @@
 package com.breakinblocks.justenoughcraftingtables.net;
 
-import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.Direction;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
 
-public record ViewStatePayload(int containerId, int requestId, Info info, int[] realIndexes, List<ItemStack> stacks)
-        implements CustomPacketPayload {
-    public static final Type<ViewStatePayload> TYPE = new Type<>(JustEnoughCraftingTables.id("view_state"));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, ViewStatePayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, ViewStatePayload::containerId,
-            ByteBufCodecs.VAR_INT, ViewStatePayload::requestId,
-            Info.STREAM_CODEC, ViewStatePayload::info,
-            NetCodecs.SIGNED_INTS, ViewStatePayload::realIndexes,
-            ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(64)), ViewStatePayload::stacks,
-            ViewStatePayload::new);
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+public record ViewStatePayload(int containerId, int requestId, Info info, int[] realIndexes, List<ItemStack> stacks) implements StationPacket {
+    public static final PacketCodec<ViewStatePayload> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+        buffer.writeVarInt(payload.containerId());
+        buffer.writeVarInt(payload.requestId());
+        Info.STREAM_CODEC.encode(buffer, payload.info());
+        NetCodecs.SIGNED_INTS.encode(buffer, payload.realIndexes());
+        NetCodecs.list(NetCodecs.ITEM, 64).encode(buffer, payload.stacks());
+    }, buffer -> new ViewStatePayload(buffer.readVarInt(), buffer.readVarInt(), Info.STREAM_CODEC.decode(buffer),
+            NetCodecs.SIGNED_INTS.decode(buffer), NetCodecs.list(NetCodecs.ITEM, 64).decode(buffer)));
 
     public record Info(Optional<Direction> side, int length, int pages, int page, int first, boolean filtered) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, Info> STREAM_CODEC = StreamCodec.composite(
-                NetCodecs.OPTIONAL_DIRECTION, Info::side,
-                ByteBufCodecs.VAR_INT, Info::length,
-                ByteBufCodecs.VAR_INT, Info::pages,
-                ByteBufCodecs.VAR_INT, Info::page,
-                ByteBufCodecs.VAR_INT, Info::first,
-                ByteBufCodecs.BOOL, Info::filtered,
-                Info::new);
+        public static final PacketCodec<Info> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+            NetCodecs.OPTIONAL_DIRECTION.encode(buffer, payload.side());
+            buffer.writeVarInt(payload.length());
+            buffer.writeVarInt(payload.pages());
+            buffer.writeVarInt(payload.page());
+            buffer.writeVarInt(payload.first());
+            buffer.writeBoolean(payload.filtered());
+        }, buffer -> new Info(NetCodecs.OPTIONAL_DIRECTION.decode(buffer), buffer.readVarInt(), buffer.readVarInt(),
+                buffer.readVarInt(), buffer.readVarInt(), buffer.readBoolean()));
     }
 }

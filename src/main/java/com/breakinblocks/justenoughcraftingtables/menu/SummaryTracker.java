@@ -14,7 +14,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public final class SummaryTracker {
     private final Map<ItemKey, Integer> ids = new HashMap<>();
@@ -220,7 +220,7 @@ public final class SummaryTracker {
             if (!stack.isEmpty()) {
                 int probe = Math.min(stack.getCount(), stack.getMaxStackSize());
                 ItemStack extracted = handler.extractItem(slot, probe, true);
-                if (ItemStack.isSameItemSameComponents(stack, extracted)) {
+                if (ItemStack.isSameItemSameTags(stack, extracted)) {
                     accessible = extracted.getCount() == probe ? stack.getCount() : extracted.getCount();
                 }
             }

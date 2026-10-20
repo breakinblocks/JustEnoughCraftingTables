@@ -8,8 +8,8 @@
   "justenoughcraftingtables.button.clear": "Clear crafting grid",
   "justenoughcraftingtables.button.order.player": "Fill from: your inventory first",
   "justenoughcraftingtables.button.order.connected": "Fill from: connected inventories first",
-  "justenoughcraftingtables.button.repeat.off": "Repeat craft from storage: off",
-  "justenoughcraftingtables.button.repeat.on": "Repeat craft from storage: on",
+  "justenoughcraftingtables.button.repeat.off": "Repeat craft from storage: off (Shift-click result)",
+  "justenoughcraftingtables.button.repeat.on": "Repeat craft from storage: on (Shift-click result)",
 
   "justenoughcraftingtables.store.nowhere": "%s items had nowhere to go",
   "justenoughcraftingtables.fill.not_enough": "Not enough ingredients",

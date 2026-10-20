@@ -1,35 +1,24 @@
 package com.breakinblocks.justenoughcraftingtables.net;
 
-import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import java.util.Optional;
 import net.minecraft.core.Direction;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public record ViewPayload(int containerId, int requestId, int sidesVersion, Request request) implements CustomPacketPayload {
-    public static final Type<ViewPayload> TYPE = new Type<>(JustEnoughCraftingTables.id("view"));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, ViewPayload> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, ViewPayload::containerId,
-            ByteBufCodecs.VAR_INT, ViewPayload::requestId,
-            ByteBufCodecs.VAR_INT, ViewPayload::sidesVersion,
-            Request.STREAM_CODEC, ViewPayload::request,
-            ViewPayload::new);
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+public record ViewPayload(int containerId, int requestId, int sidesVersion, Request request) implements StationPacket {
+    public static final PacketCodec<ViewPayload> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+        buffer.writeVarInt(payload.containerId());
+        buffer.writeVarInt(payload.requestId());
+        buffer.writeVarInt(payload.sidesVersion());
+        Request.STREAM_CODEC.encode(buffer, payload.request());
+    }, buffer -> new ViewPayload(buffer.readVarInt(), buffer.readVarInt(), buffer.readVarInt(), Request.STREAM_CODEC.decode(buffer)));
 
     public record Request(Optional<Direction> side, int page, int first, Optional<int[]> filter, boolean rebuild) {
-        public static final StreamCodec<RegistryFriendlyByteBuf, Request> STREAM_CODEC = StreamCodec.composite(
-                NetCodecs.OPTIONAL_DIRECTION, Request::side,
-                ByteBufCodecs.VAR_INT, Request::page,
-                ByteBufCodecs.VAR_INT, Request::first,
-                ByteBufCodecs.optional(NetCodecs.SORTED_IDS), Request::filter,
-                ByteBufCodecs.BOOL, Request::rebuild,
-                Request::new);
+        public static final PacketCodec<Request> STREAM_CODEC = PacketCodec.of((buffer, payload) -> {
+            NetCodecs.OPTIONAL_DIRECTION.encode(buffer, payload.side());
+            buffer.writeVarInt(payload.page());
+            buffer.writeVarInt(payload.first());
+            NetCodecs.SORTED_IDS.optional().encode(buffer, payload.filter());
+            buffer.writeBoolean(payload.rebuild());
+        }, buffer -> new Request(NetCodecs.OPTIONAL_DIRECTION.decode(buffer), buffer.readVarInt(), buffer.readVarInt(),
+                NetCodecs.SORTED_IDS.optional().decode(buffer), buffer.readBoolean()));
     }
 }

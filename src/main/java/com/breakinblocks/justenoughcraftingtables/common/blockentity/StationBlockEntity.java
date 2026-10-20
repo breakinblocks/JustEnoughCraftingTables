@@ -14,14 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -206,19 +202,12 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
     }
 
     @Override
-    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buffer) {
-        if (menu instanceof StationMenu stationMenu) {
-            stationMenu.writeOpenData(buffer);
-        }
-    }
-
-    @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         for (int i = 0; i < GRID_SIZE; i++) {
             String key = KEY_SLOT + i;
             if (tag.contains(key, Tag.TAG_COMPOUND)) {
-                grid.set(i, ItemStack.parseOptional(registries, tag.getCompound(key)));
+                grid.set(i, ItemStack.of(tag.getCompound(key)));
             } else {
                 grid.set(i, ItemStack.EMPTY);
             }
@@ -232,7 +221,11 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
         }
         customName = null;
         if (tag.contains(KEY_CUSTOM_NAME, Tag.TAG_STRING)) {
-            customName = parseCustomNameSafe(tag.getString(KEY_CUSTOM_NAME), registries);
+            try {
+                customName = Component.Serializer.fromJson(tag.getString(KEY_CUSTOM_NAME));
+            } catch (RuntimeException ignored) {
+                customName = null;
+            }
         }
         hidden.clear();
         if (tag.contains(KEY_HIDDEN, Tag.TAG_ANY_NUMERIC)) {
@@ -246,7 +239,7 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
         if (tag.contains(KEY_ORIGINS, Tag.TAG_LIST)) {
             origins.load(
                     GridOrigins.CODEC
-                            .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get(KEY_ORIGINS))
+                            .parse(NbtOps.INSTANCE, tag.get(KEY_ORIGINS))
                             .resultOrPartial(error -> JustEnoughCraftingTables.LOGGER.warn("Could not read station grid origins at {}: {}", worldPosition, error))
                             .orElse(List.of()),
                     grid);
@@ -259,14 +252,14 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        writeGrid(tag, registries);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        writeGrid(tag);
         if (selectedSide != null) {
             tag.putInt(KEY_CURRENT_CONTAINER, selectedSide.get3DDataValue());
         }
         if (customName != null) {
-            tag.putString(KEY_CUSTOM_NAME, Component.Serializer.toJson(customName, registries));
+            tag.putString(KEY_CUSTOM_NAME, Component.Serializer.toJson(customName));
         }
         int mask = 0;
         for (Direction direction : hidden) {
@@ -276,23 +269,23 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
             tag.putByte(KEY_HIDDEN, (byte) mask);
         }
         GridOrigins.CODEC
-                .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), origins.save())
+                .encodeStart(NbtOps.INSTANCE, origins.save())
                 .resultOrPartial(error -> JustEnoughCraftingTables.LOGGER.warn("Could not save station grid origins at {}: {}", worldPosition, error))
                 .ifPresent(encoded -> tag.put(KEY_ORIGINS, encoded));
         tag.putInt(KEY_FORMAT, FORMAT);
     }
 
-    private void writeGrid(CompoundTag tag, HolderLookup.Provider registries) {
+    private void writeGrid(CompoundTag tag) {
         for (int i = 0; i < GRID_SIZE; i++) {
             ItemStack stack = grid.get(i);
-            tag.put(KEY_SLOT + i, stack.isEmpty() ? new CompoundTag() : stack.save(registries));
+            tag.put(KEY_SLOT + i, stack.isEmpty() ? new CompoundTag() : stack.save(new CompoundTag()));
         }
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        writeGrid(tag, registries);
+        writeGrid(tag);
         tag.putInt(KEY_FORMAT, FORMAT);
         return tag;
     }
@@ -303,26 +296,4 @@ public class StationBlockEntity extends BlockEntity implements MenuProvider, Nam
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
-    protected void applyImplicitComponents(DataComponentInput componentInput) {
-        super.applyImplicitComponents(componentInput);
-        Component name = componentInput.get(DataComponents.CUSTOM_NAME);
-        if (name != null) {
-            customName = name;
-        }
-        componentInput.get(DataComponents.BLOCK_STATE);
-    }
-
-    @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder components) {
-        super.collectImplicitComponents(components);
-        components.set(DataComponents.CUSTOM_NAME, customName);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void removeComponentsFromTag(CompoundTag tag) {
-        super.removeComponentsFromTag(tag);
-        tag.remove(KEY_CUSTOM_NAME);
-    }
 }

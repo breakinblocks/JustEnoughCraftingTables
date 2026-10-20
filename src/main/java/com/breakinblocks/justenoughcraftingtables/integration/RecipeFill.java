@@ -3,6 +3,7 @@ package com.breakinblocks.justenoughcraftingtables.integration;
 import com.breakinblocks.justenoughcraftingtables.menu.ItemKey;
 import com.breakinblocks.justenoughcraftingtables.menu.StationMenu;
 import com.breakinblocks.justenoughcraftingtables.net.FillRecipePayload;
+import com.breakinblocks.justenoughcraftingtables.net.ModNetwork;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +19,6 @@ import javax.annotation.Nullable;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class RecipeFill {
     public static final int GRID_SIZE = 9;
@@ -102,7 +102,7 @@ public final class RecipeFill {
     }
 
     private static int stackHash(ItemStack stack) {
-        return stack.isEmpty() ? 0 : ItemStack.hashItemAndComponents(stack) * 31 + stack.getCount();
+        return stack.isEmpty() ? 0 : ItemKey.view(stack).hashCode() * 31 + stack.getCount();
     }
 
     public static Plan plan(StationMenu menu, List<Requirement> requirements) {
@@ -195,7 +195,7 @@ public final class RecipeFill {
                 }
                 continue;
             }
-            if (current.isEmpty() || !ItemStack.isSameItemSameComponents(current, template)) {
+            if (current.isEmpty() || !ItemStack.isSameItemSameTags(current, template)) {
                 return 0;
             }
             sets = Math.min(sets, current.getCount());
@@ -217,6 +217,6 @@ public final class RecipeFill {
     }
 
     public static void send(StationMenu menu, List<ItemStack> templates, int sets) {
-        PacketDistributor.sendToServer(new FillRecipePayload(menu.containerId, templates, sets));
+        ModNetwork.sendToServer(new FillRecipePayload(menu.containerId, templates, sets));
     }
 }

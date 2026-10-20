@@ -1,20 +1,20 @@
 package com.breakinblocks.justenoughcraftingtables.config;
 
 import com.breakinblocks.justenoughcraftingtables.menu.SourceOrder;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 public final class JustEnoughCraftingTablesConfig {
-    public static final ModConfigSpec clientSpec;
+    public static final ForgeConfigSpec clientSpec;
     public static final ClientConfig CLIENT;
-    public static final ModConfigSpec serverSpec;
+    public static final ForgeConfigSpec serverSpec;
     public static final ServerConfig SERVER;
 
     static {
-        Pair<ClientConfig, ModConfigSpec> client = new ModConfigSpec.Builder().configure(ClientConfig::new);
+        Pair<ClientConfig, ForgeConfigSpec> client = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
         CLIENT = client.getLeft();
         clientSpec = client.getRight();
-        Pair<ServerConfig, ModConfigSpec> server = new ModConfigSpec.Builder().configure(ServerConfig::new);
+        Pair<ServerConfig, ForgeConfigSpec> server = new ForgeConfigSpec.Builder().configure(ServerConfig::new);
         SERVER = server.getLeft();
         serverSpec = server.getRight();
     }
@@ -29,15 +29,15 @@ public final class JustEnoughCraftingTablesConfig {
     }
 
     public static class ServerConfig {
-        public final ModConfigSpec.EnumValue<AccessContext> accessContext;
-        public final ModConfigSpec.BooleanValue allowInsertIntoSides;
-        public final ModConfigSpec.IntValue pageSize;
-        public final ModConfigSpec.IntValue scanBudget;
-        public final ModConfigSpec.IntValue maxSummaryEntries;
-        public final ModConfigSpec.IntValue minTicksBetweenViewRebuilds;
-        public final ModConfigSpec.IntValue maxRepeatCrafts;
+        public final ForgeConfigSpec.EnumValue<AccessContext> accessContext;
+        public final ForgeConfigSpec.BooleanValue allowInsertIntoSides;
+        public final ForgeConfigSpec.IntValue pageSize;
+        public final ForgeConfigSpec.IntValue scanBudget;
+        public final ForgeConfigSpec.IntValue maxSummaryEntries;
+        public final ForgeConfigSpec.IntValue minTicksBetweenViewRebuilds;
+        public final ForgeConfigSpec.IntValue maxRepeatCrafts;
 
-        ServerConfig(ModConfigSpec.Builder builder) {
+        ServerConfig(ForgeConfigSpec.Builder builder) {
             builder.push("sides");
             accessContext = builder.translation("justenoughcraftingtables.configuration.accessContext")
                     .defineEnum("accessContext", AccessContext.INTERNAL);
@@ -62,23 +62,23 @@ public final class JustEnoughCraftingTablesConfig {
     }
 
     public static class ClientConfig {
-        public final ModConfigSpec.BooleanValue renderGridItems;
-        public final ModConfigSpec.BooleanValue wheelScrollWholePanel;
-        public final ModConfigSpec.EnumValue<SourceOrder> fillSourceOrder;
-        public final ModConfigSpec.BooleanValue repeatCraft;
-        public final ModConfigSpec.EnumValue<PanelSide> panelSide;
-        public final ModConfigSpec.BooleanValue compactCounts;
-        public final ModConfigSpec.IntValue buttonsX;
-        public final ModConfigSpec.IntValue buttonsY;
-        public final ModConfigSpec.EnumValue<ButtonsLayout> buttonsLayout;
-        public final ModConfigSpec.IntValue buttonsSpacing;
-        public final ModConfigSpec.BooleanValue collapseHiddenButtons;
+        public final ForgeConfigSpec.BooleanValue renderGridItems;
+        public final ForgeConfigSpec.BooleanValue wheelScrollWholePanel;
+        public final ForgeConfigSpec.EnumValue<SourceOrder> fillSourceOrder;
+        public final ForgeConfigSpec.BooleanValue repeatCraft;
+        public final ForgeConfigSpec.EnumValue<PanelSide> panelSide;
+        public final ForgeConfigSpec.BooleanValue compactCounts;
+        public final ForgeConfigSpec.IntValue buttonsX;
+        public final ForgeConfigSpec.IntValue buttonsY;
+        public final ForgeConfigSpec.EnumValue<ButtonsLayout> buttonsLayout;
+        public final ForgeConfigSpec.IntValue buttonsSpacing;
+        public final ForgeConfigSpec.BooleanValue collapseHiddenButtons;
         public final ButtonOffset storeButtonOffset;
         public final ButtonOffset clearButtonOffset;
         public final ButtonOffset sourceOrderButtonOffset;
         public final ButtonOffset repeatButtonOffset;
 
-        ClientConfig(ModConfigSpec.Builder builder) {
+        ClientConfig(ForgeConfigSpec.Builder builder) {
             builder.push("rendering");
             renderGridItems = builder.translation("justenoughcraftingtables.configuration.renderGridItems")
                     .define("renderGridItems", true);
@@ -117,10 +117,10 @@ public final class JustEnoughCraftingTablesConfig {
     }
 
     public static class ButtonOffset {
-        public final ModConfigSpec.IntValue x;
-        public final ModConfigSpec.IntValue y;
+        public final ForgeConfigSpec.IntValue x;
+        public final ForgeConfigSpec.IntValue y;
 
-        ButtonOffset(ModConfigSpec.Builder builder, String name) {
+        ButtonOffset(ForgeConfigSpec.Builder builder, String name) {
             String key = "justenoughcraftingtables.configuration." + name;
             builder.translation(key).push(name);
             x = builder.translation(key + ".x").defineInRange("x", 0, -1000, 1000);

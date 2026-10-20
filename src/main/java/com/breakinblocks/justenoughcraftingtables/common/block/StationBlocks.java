@@ -1,6 +1,7 @@
 package com.breakinblocks.justenoughcraftingtables.common.block;
 
 import com.breakinblocks.justenoughcraftingtables.common.blockentity.StationBlockEntity;
+import com.breakinblocks.justenoughcraftingtables.menu.StationMenu;
 import com.breakinblocks.justenoughcraftingtables.registry.ModBlocks;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -15,7 +16,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraftforge.network.NetworkHooks;
 
 public final class StationBlocks {
     private StationBlocks() {
@@ -30,7 +33,7 @@ public final class StationBlocks {
             return InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof StationBlockEntity station && player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.openMenu(station);
+            NetworkHooks.openScreen(serverPlayer, station, buffer -> StationMenu.writeInitialData(serverPlayer, station, buffer));
         }
         return InteractionResult.CONSUME;
     }
@@ -62,6 +65,15 @@ public final class StationBlocks {
     public static MapColor mapColor(BlockState state) {
         DyeColor dye = state.getValue(StationColor.PROPERTY).dye();
         return dye == null ? MapColor.WOOD : dye.getMapColor();
+    }
+
+    public static void setPlacedName(Level level, BlockPos pos, BlockState state, ItemStack stack) {
+        if (state.getBlock() instanceof StationSlabBlock && state.getValue(StationSlabBlock.TYPE) == SlabType.DOUBLE) {
+            return;
+        }
+        if (stack.hasCustomHoverName() && level.getBlockEntity(pos) instanceof StationBlockEntity station) {
+            station.setCustomName(stack.getHoverName());
+        }
     }
 
     public static ItemStack cloneStack(Block block, BlockState state) {

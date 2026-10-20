@@ -3,7 +3,7 @@ package com.breakinblocks.justenoughcraftingtables.menu;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 /** An incremental filter rebuild. The menu disables mapped slots until it has a complete result. */
 final class ViewScan {
