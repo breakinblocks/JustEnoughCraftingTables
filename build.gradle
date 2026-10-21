@@ -4,6 +4,7 @@ plugins {
     id 'java-library'
     id 'idea'
     id 'net.neoforged.moddev' version '2.0.144'
+    id 'me.modmuss50.mod-publish-plugin' version '1.1.0'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -156,4 +157,26 @@ idea {
 
 tasks.named('jar', Jar).configure {
     from(rootProject.file('LICENSE.md'))
+}
+
+def publishDryRun = project.hasProperty("dryRun") && project.property("dryRun") == "true"
+
+publishMods {
+    dryRun = publishDryRun
+    file = jar.archiveFile
+    def changelogFile = file("metadata/changelogs/${mod_version}.md")
+    changelog = changelogFile.exists() ? changelogFile.text : "Release ${project.version}"
+    displayName = "${mod_name} ${project.version}"
+    type = BETA
+    modLoaders.add("neoforge")
+
+    curseforge {
+        projectId = "1757848"
+        accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+        minecraftVersions.add(minecraft_version)
+        clientRequired = true
+        serverRequired = true
+        optional("jei", "jade", "crafting-tweaks")
+        incompatible("crafting-station")
+    }
 }
