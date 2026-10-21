@@ -4,6 +4,7 @@ plugins {
     id 'java-library'
     id 'idea'
     id 'net.neoforged.moddev.legacyforge' version '2.0.144'
+    id 'me.modmuss50.mod-publish-plugin' version '1.1.0'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -189,4 +190,26 @@ tasks.named('jar', Jar).configure {
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
+}
+
+def publishDryRun = project.hasProperty("dryRun") && project.property("dryRun") == "true"
+
+publishMods {
+    dryRun = publishDryRun
+    file = tasks.named('reobfJar').flatMap { it.archiveFile }
+    def changelogFile = file("metadata/changelogs/${mod_version}.md")
+    changelog = changelogFile.exists() ? changelogFile.text : "Release ${project.version}"
+    displayName = "${mod_name} ${project.version}"
+    type = BETA
+    modLoaders.add("forge")
+
+    curseforge {
+        projectId = "1757848"
+        accessToken = providers.environmentVariable("CURSEFORGE_TOKEN")
+        minecraftVersions.add(minecraft_version)
+        clientRequired = true
+        serverRequired = true
+        optional("jei", "emi", "jade", "crafting-tweaks", "polymorph")
+        incompatible("crafting-station")
+    }
 }
