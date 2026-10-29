@@ -47,7 +47,7 @@ publishMods {
     def changelogFile = rootProject.file("metadata/changelogs/${mod_version}.md")
     changelog = changelogFile.exists() ? changelogFile.text : "Release ${project.version}"
     displayName = "${mod_name} ${project.version} (Fabric)"
-    type = BETA
+    type = STABLE
     modLoaders.add('fabric')
     curseforge {
         projectId = '1757848'
