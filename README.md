@@ -4,7 +4,7 @@ A crafting table that remembers what you put in it and lets you craft straight o
 
 Place a Crafting Station beside your chests, barrels or drawers, open it, and a panel slides out beside the crafting grid showing what is in them. Grab what you need, craft, and put the rest back, all without leaving the crafting screen.
 
-A NeoForge mod.
+A Minecraft 1.21.1 mod for NeoForge and Fabric.
 
 ## Getting one
 

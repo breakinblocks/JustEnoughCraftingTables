@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "justenoughcraftingtables_tests",
+  "version": "1.0.0",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.breakinblocks.justenoughcraftingtables.gametest.FabricGameTests"
+    ]
+  }
+}
