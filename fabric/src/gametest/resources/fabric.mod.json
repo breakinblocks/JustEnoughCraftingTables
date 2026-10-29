@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "justenoughcraftingtables_tests",
+  "version": "1.0.0",
+  "name": "Just Enough Crafting Tables Tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "com.breakinblocks.justenoughcraftingtables.gametest.StationClientTest"
+    ],
+    "fabric-gametest": [
+      "com.breakinblocks.justenoughcraftingtables.gametest.FabricGameTests"
+    ]
+  },
+  "depends": {
+    "justenoughcraftingtables": "*"
+  }
+}

@@ -4,7 +4,7 @@ A crafting table that remembers what you put in it and lets you craft straight o
 
 Place a Crafting Station beside your chests, barrels or drawers, open it, and a panel slides out beside the crafting grid showing what is in them. Grab what you need, craft, and put the rest back, all without leaving the crafting screen.
 
-A NeoForge mod.
+A Minecraft 26.1.2 mod for NeoForge and Fabric.
 
 ## Getting one
 
@@ -100,7 +100,7 @@ The Crafting Station Slab can go on the top or bottom half of a block, and can b
 
 ## Settings
 
-Open the mod's settings from the Mods screen. You can:
+On NeoForge, open the mod's settings from the Mods screen. Fabric settings are stored in `config/justenoughcraftingtables-client.properties` and `config/justenoughcraftingtables-server.properties`; file edits take effect after restarting the game or server. You can:
 
 - move the panel to the right side of the crafting screen, which helps if your JEI bookmarks sit on the left
 - turn off the items drawn on top of the table
@@ -136,6 +136,7 @@ The two mods cannot be installed together. The game will refuse to start if both
 - Stations do not connect through other stations, so placing two side by side does not chain them together.
 - Hoppers and pipes cannot put items into or take items out of the crafting grid.
 - A station only sees blocks it is touching, not diagonals or blocks further away.
+
 
 ## License
 

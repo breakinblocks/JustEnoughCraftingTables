@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.breakinblocks.justenoughcraftingtables.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["CauldronDispatcherAccessor"],
+  "client": [
+    "CompactCountMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

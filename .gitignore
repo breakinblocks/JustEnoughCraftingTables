@@ -27,9 +27,9 @@ logs/
 *.log
 crash-reports/
 
-src/generated/*
-!src/generated/resources/
-src/generated/resources/.cache/
+common/src/generated/*
+!common/src/generated/resources/
+common/src/generated/resources/.cache/
 
 .DS_Store
 .DS_Store?
