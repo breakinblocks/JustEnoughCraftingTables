@@ -5,7 +5,6 @@ import com.breakinblocks.justenoughcraftingtables.common.blockentity.StationBloc
 import com.breakinblocks.justenoughcraftingtables.config.JustEnoughCraftingTablesConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -16,6 +15,7 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -61,7 +61,7 @@ public final class StationRenderer implements BlockEntityRenderer<StationBlockEn
             state.facing = state.facing.getOpposite();
             if (blockState.getValue(BlockStateProperties.SLAB_TYPE) == SlabType.BOTTOM) state.surface = 0.5F;
         }
-        state.lightCoords = LevelRenderer.getLightCoords(station.getLevel(), station.getBlockPos().above());
+        state.lightCoords = LightCoordsUtil.getLightCoords(station.getLevel(), station.getBlockPos().above());
         int seed = (int) station.getBlockPos().asLong();
         for (int slot = 0; slot < state.items.length; slot++) {
             itemModels.updateForTopItem(state.items[slot], station.getGridItem(slot), ItemDisplayContext.FIXED, station.getLevel(), null, seed + slot);
@@ -73,7 +73,7 @@ public final class StationRenderer implements BlockEntityRenderer<StationBlockEn
         if (!state.visible) return;
         pose.pushPose();
         pose.translate(0.5F, state.surface, 0.5F);
-        pose.mulPose(Axis.YP.rotationDegrees(-state.facing.toYRot()));
+        pose.rotate(Axis.YP.rotationDegrees(-state.facing.toYRot()));
         for (int slot = 0; slot < state.items.length; slot++) {
             ItemStackRenderState item = state.items[slot];
             if (item.isEmpty()) continue;
@@ -81,8 +81,8 @@ public final class StationRenderer implements BlockEntityRenderer<StationBlockEn
             float scale = block ? 0.25F : 0.175F;
             pose.pushPose();
             pose.translate((slot % 3 - 1) * CELL, block ? 1.0F / 16.0F : 0.005F, (slot / 3 - 1) * CELL);
-            pose.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            pose.mulPose(Axis.YP.rotationDegrees(180.0F));
+            pose.rotate(Axis.XP.rotationDegrees(-90.0F));
+            pose.rotate(Axis.YP.rotationDegrees(180.0F));
             pose.scale(scale, scale, scale);
             item.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();

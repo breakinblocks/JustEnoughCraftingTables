@@ -5,6 +5,7 @@ import com.breakinblocks.justenoughcraftingtables.config.JustEnoughCraftingTable
 import com.breakinblocks.justenoughcraftingtables.events.DyeingEvents;
 import com.breakinblocks.justenoughcraftingtables.events.ModBusEvents;
 import com.breakinblocks.justenoughcraftingtables.integration.craftingtweaks.CraftingTweaksIntegration;
+import com.breakinblocks.justenoughcraftingtables.mixin.CauldronDispatcherAccessor;
 import com.breakinblocks.justenoughcraftingtables.net.ModNetwork;
 import com.breakinblocks.justenoughcraftingtables.platform.Platform;
 import com.breakinblocks.justenoughcraftingtables.registry.ModAliases;
@@ -16,14 +17,12 @@ import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.fabricmc.fabric.api.registry.FuelValueEvents;
 import net.minecraft.core.cauldron.CauldronInteractions;
-import com.breakinblocks.justenoughcraftingtables.mixin.CauldronDispatcherAccessor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import org.slf4j.Logger;
 
 public final class JustEnoughCraftingTables implements ModInitializer {
@@ -46,10 +45,6 @@ public final class JustEnoughCraftingTables implements ModInitializer {
         UseBlockCallback.EVENT.register(DyeingEvents::use);
         ((CauldronDispatcherAccessor) CauldronInteractions.WATER).ject$put(ModBlocks.CRAFTING_STATION.get().asItem(), ModBusEvents.WASH_STATION);
         ((CauldronDispatcherAccessor) CauldronInteractions.WATER).ject$put(ModBlocks.CRAFTING_STATION_SLAB.get().asItem(), ModBusEvents.WASH_STATION);
-        FuelValueEvents.BUILD.register((builder, context) -> {
-            builder.add(ModBlocks.CRAFTING_STATION.get(), 300);
-            builder.add(ModBlocks.CRAFTING_STATION_SLAB.get(), 150);
-        });
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             entries.accept(ModBlocks.CRAFTING_STATION.get());
             entries.accept(ModBlocks.CRAFTING_STATION_SLAB.get());

@@ -2,6 +2,7 @@ package com.breakinblocks.justenoughcraftingtables.client.gui;
 
 import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import com.breakinblocks.justenoughcraftingtables.menu.SideEntry;
+import com.mojang.blaze3d.platform.InputConstants;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -97,7 +98,7 @@ public class SideTabButton extends AbstractWidget {
 
     @Override
     protected boolean isValidClickButton(MouseButtonInfo buttonInfo) {
-        return buttonInfo.button() == 0 || buttonInfo.button() == 1;
+        return buttonInfo.button() == InputConstants.MOUSE_BUTTON_LEFT || buttonInfo.button() == InputConstants.MOUSE_BUTTON_RIGHT;
     }
 
     @Override
@@ -108,7 +109,7 @@ public class SideTabButton extends AbstractWidget {
         if (!active || !visible || entry == null || !isValidClickButton(event.buttonInfo()) || !isMouseOver(mouseX, mouseY)) {
             return false;
         }
-        if (button == 1) {
+        if (button == InputConstants.MOUSE_BUTTON_RIGHT) {
             playDownSound(Minecraft.getInstance().getSoundManager());
             owner.onTabRightClick(direction);
             return true;

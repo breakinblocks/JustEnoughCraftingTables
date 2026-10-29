@@ -11,13 +11,16 @@ import com.breakinblocks.justenoughcraftingtables.menu.SideEntry;
 import com.breakinblocks.justenoughcraftingtables.menu.SourceOrder;
 import com.breakinblocks.justenoughcraftingtables.menu.StationMenu;
 import com.breakinblocks.justenoughcraftingtables.menu.WindowSlot;
+import com.breakinblocks.justenoughcraftingtables.platform.ClientNetwork;
+import com.breakinblocks.justenoughcraftingtables.platform.Platform;
+import com.breakinblocks.justenoughcraftingtables.platform.StationScreenBase;
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
-import com.breakinblocks.justenoughcraftingtables.platform.StationScreenBase;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -32,10 +35,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import com.breakinblocks.justenoughcraftingtables.platform.Platform;
-import com.breakinblocks.justenoughcraftingtables.platform.ClientNetwork;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 public class StationScreen extends StationScreenBase implements SideTabButton.Owner {
     private static final Identifier BACKGROUND = Identifier.withDefaultNamespace("textures/gui/container/crafting_table.png");
@@ -611,7 +611,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         double mouseX = event.x();
         double mouseY = event.y();
         int button = event.button();
-        if (button == 0 && scrollbarShown() && inTrack(mouseX, mouseY)) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && scrollbarShown() && inTrack(mouseX, mouseY)) {
             draggingScroll = true;
             scrollTo(mouseY);
             return true;
@@ -633,7 +633,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (draggingScroll && event.button() == 0) {
+        if (draggingScroll && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             draggingScroll = false;
             return true;
         }
@@ -667,13 +667,13 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
     public boolean keyPressed(KeyEvent event) {
         int keyCode = event.key();
         if (search != null && search.visible) {
-            if (keyCode == GLFW.GLFW_KEY_F && minecraft.hasControlDown() && !minecraft.hasShiftDown() && !minecraft.hasAltDown()) {
+            if (keyCode == InputConstants.KEY_F && minecraft.hasControlDown() && !minecraft.hasShiftDown() && !minecraft.hasAltDown()) {
                 setFocused(search);
                 search.setFocused(true);
                 return true;
             }
             if (search.isFocused()) {
-                if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                if (keyCode == InputConstants.KEY_ESCAPE) {
                     if (!search.getValue().isEmpty()) {
                         search.setValue("");
                         applyQuery();
@@ -682,7 +682,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
                     search.setFocused(false);
                     return super.keyPressed(event);
                 }
-                if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+                if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
                     applyQuery();
                     return true;
                 }
@@ -696,19 +696,19 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         }
         if (panelShown() && overPanel(mouseX(), mouseY())) {
             switch (keyCode) {
-                case GLFW.GLFW_KEY_PAGE_UP -> {
+                case InputConstants.KEY_PAGEUP -> {
                     changePage(-1);
                     return true;
                 }
-                case GLFW.GLFW_KEY_PAGE_DOWN -> {
+                case InputConstants.KEY_PAGEDOWN -> {
                     changePage(1);
                     return true;
                 }
-                case GLFW.GLFW_KEY_HOME -> {
+                case InputConstants.KEY_HOME -> {
                     setPage(0);
                     return true;
                 }
-                case GLFW.GLFW_KEY_END -> {
+                case InputConstants.KEY_END -> {
                     setPage(displayPages() - 1);
                     return true;
                 }

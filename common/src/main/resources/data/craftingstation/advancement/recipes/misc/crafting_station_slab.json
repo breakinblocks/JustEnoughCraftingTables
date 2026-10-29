@@ -14,7 +14,9 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "craftingstation:crafting_station_slab"
+        "recipes": [
+          "craftingstation:crafting_station_slab"
+        ]
       }
     }
   },

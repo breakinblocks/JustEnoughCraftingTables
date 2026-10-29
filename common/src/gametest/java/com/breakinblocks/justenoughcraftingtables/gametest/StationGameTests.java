@@ -41,10 +41,13 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.storage.TagValueOutput;
@@ -61,7 +64,7 @@ public final class StationGameTests {
     @SuppressWarnings("removal")
     private static ServerPlayer player(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        Vec3 centre = helper.absolutePos(STATION.south()).getBottomCenter();
+        Vec3 centre = Vec3.atBottomCenterOf(helper.absolutePos(STATION.south()));
         player.teleportTo(centre.x, centre.y, centre.z);
         player.getInventory().clearContent();
         return player;
@@ -672,8 +675,17 @@ public final class StationGameTests {
     }
 
     public static void fuelValues(GameTestHelper helper) {
-        helper.assertValueEqual(300, helper.getLevel().fuelValues().burnDuration(new ItemStack(ModBlocks.CRAFTING_STATION.get())), "station burn time");
-        helper.assertValueEqual(150, helper.getLevel().fuelValues().burnDuration(new ItemStack(ModBlocks.CRAFTING_STATION_SLAB.get())), "slab burn time");
+        for (var block : new Block[] {ModBlocks.CRAFTING_STATION.get(), ModBlocks.CRAFTING_STATION_SLAB.get()}) {
+            helper.setBlock(STATION, Blocks.AIR);
+            helper.setBlock(STATION, Blocks.FURNACE);
+            var furnace = helper.getBlockEntity(STATION, FurnaceBlockEntity.class);
+            furnace.setItem(0, new ItemStack(Items.RAW_IRON));
+            furnace.setItem(1, new ItemStack(block));
+            AbstractFurnaceBlockEntity.serverTick(helper.getLevel(), helper.absolutePos(STATION), furnace.getBlockState(), furnace);
+            int expected = block == ModBlocks.CRAFTING_STATION.get() ? 300 : 150;
+            int actual = furnace.saveWithoutMetadata(helper.getLevel().registryAccess()).getIntOr("lit_total_time", 0);
+            helper.assertValueEqual(expected, actual, "station fuel burn time");
+        }
         helper.succeed();
     }
 }

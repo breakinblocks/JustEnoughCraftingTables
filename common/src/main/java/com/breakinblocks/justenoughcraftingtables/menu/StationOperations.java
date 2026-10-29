@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.ToIntFunction;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
@@ -397,7 +398,7 @@ public final class StationOperations {
                 if (!ItemStack.isSameItemSameComponents(extracted, template)) {
                     ItemStack remainder = handler.insertItem(slot, extracted, false);
                     if (!remainder.isEmpty()) {
-                        menu.player().getInventory().placeItemBackInInventory(remainder);
+                        menu.player().getInventory().placeItemBackInInventory(remainder, Prediction.SERVER_ONLY);
                     }
                     continue;
                 }

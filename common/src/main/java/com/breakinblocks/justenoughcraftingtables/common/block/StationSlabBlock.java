@@ -1,7 +1,6 @@
 package com.breakinblocks.justenoughcraftingtables.common.block;
 
 import com.breakinblocks.justenoughcraftingtables.common.blockentity.StationBlockEntity;
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -28,17 +27,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 
 public class StationSlabBlock extends SlabBlock implements EntityBlock {
-    public static final MapCodec<StationSlabBlock> CODEC = simpleCodec(StationSlabBlock::new);
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public StationSlabBlock(Properties properties) {
         super(properties);
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(StationColor.PROPERTY, StationColor.NONE));
-    }
-
-    @Override
-    public MapCodec<? extends SlabBlock> codec() {
-        return CODEC;
     }
 
     @Override

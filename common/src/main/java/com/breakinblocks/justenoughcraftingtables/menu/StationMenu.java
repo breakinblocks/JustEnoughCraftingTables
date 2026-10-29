@@ -8,9 +8,10 @@ import com.breakinblocks.justenoughcraftingtables.net.SidesPayload;
 import com.breakinblocks.justenoughcraftingtables.net.SummaryPayload;
 import com.breakinblocks.justenoughcraftingtables.net.ViewPayload;
 import com.breakinblocks.justenoughcraftingtables.net.ViewStatePayload;
-import com.breakinblocks.justenoughcraftingtables.registry.ModMenus;
-import com.breakinblocks.justenoughcraftingtables.platform.StorageLookup;
 import com.breakinblocks.justenoughcraftingtables.platform.Platform;
+import com.breakinblocks.justenoughcraftingtables.platform.StorageLookup;
+import com.breakinblocks.justenoughcraftingtables.platform.StorageTransaction;
+import com.breakinblocks.justenoughcraftingtables.registry.ModMenus;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -43,7 +45,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gamerules.GameRules;
-import com.breakinblocks.justenoughcraftingtables.platform.StorageTransaction;
 import org.jspecify.annotations.Nullable;
 
 public class StationMenu extends AbstractContainerMenu {
@@ -442,7 +443,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (inClick) {
             refunds.add(stack.copy());
         } else {
-            player.getInventory().placeItemBackInInventory(stack.copy());
+            player.getInventory().placeItemBackInInventory(stack.copy(), Prediction.SERVER_ONLY);
         }
     }
 
@@ -1148,7 +1149,7 @@ public class StationMenu extends AbstractContainerMenu {
             } else if (ItemStack.isSameItemSameComponents(carried, stack)) {
                 carried.grow(stack.getCount());
             } else {
-                player.getInventory().placeItemBackInInventory(stack);
+                player.getInventory().placeItemBackInInventory(stack, Prediction.SERVER_ONLY);
             }
         }
     }
@@ -1352,7 +1353,7 @@ public class StationMenu extends AbstractContainerMenu {
         }
         slot.onTake(player, stack);
         if (index == RESULT_SLOT) {
-            player.drop(stack, false);
+            player.drop(stack, false, Prediction.SERVER_ONLY);
         }
         return moved;
     }
@@ -1385,7 +1386,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (!extracted.isEmpty()) {
             ItemStack remainder = handler.insertItem(real, extracted, false);
             if (!remainder.isEmpty()) {
-                player.getInventory().placeItemBackInInventory(remainder);
+                player.getInventory().placeItemBackInInventory(remainder, Prediction.SERVER_ONLY);
             }
             moved.shrink(extracted.getCount());
         }

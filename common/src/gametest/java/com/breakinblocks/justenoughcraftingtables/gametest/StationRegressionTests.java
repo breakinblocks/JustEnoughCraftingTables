@@ -16,6 +16,7 @@ import com.breakinblocks.justenoughcraftingtables.net.NetCodecs;
 import com.breakinblocks.justenoughcraftingtables.net.SummaryPayload;
 import com.breakinblocks.justenoughcraftingtables.net.ViewPayload;
 import com.breakinblocks.justenoughcraftingtables.registry.ModBlocks;
+import com.mojang.serialization.Lifecycle;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.Field;
@@ -25,7 +26,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.VarInt;
@@ -37,6 +41,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeMap;
@@ -57,7 +62,7 @@ public final class StationRegressionTests {
     @SuppressWarnings("removal")
     private static ServerPlayer player(GameTestHelper helper) {
         ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        Vec3 centre = helper.absolutePos(STATION.south()).getBottomCenter();
+        Vec3 centre = Vec3.atBottomCenterOf(helper.absolutePos(STATION.south()));
         player.teleportTo(centre.x, centre.y, centre.z);
         player.getInventory().clearContent();
         return player;
@@ -98,7 +103,7 @@ public final class StationRegressionTests {
         ChestBlockEntity chest = helper.getBlockEntity(STATION.north(), ChestBlockEntity.class);
         chest.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON);
         Player player = helper.makeMockPlayer(GameType.SPECTATOR);
-        Vec3 centre = helper.absolutePos(STATION.south()).getBottomCenter();
+        Vec3 centre = Vec3.atBottomCenterOf(helper.absolutePos(STATION.south()));
         player.setPos(centre.x, centre.y, centre.z);
         helper.assertTrue(!chest.canOpen(player), "Spectator unexpectedly allowed to open ungenerated loot");
         StationMenu menu = new StationMenu(1, player.getInventory(), station);
@@ -556,7 +561,10 @@ public final class StationRegressionTests {
         try {
             Field field = RecipeManager.class.getDeclaredField("recipes");
             field.setAccessible(true);
-            field.set(manager, RecipeMap.create(recipes));
+            var registry = new MappedRegistry<Recipe<?>>(Registries.RECIPE, Lifecycle.stable());
+            for (var recipe : recipes) registry.register(recipe.id(), recipe.value(), RegistrationInfo.BUILT_IN);
+            registry.freeze();
+            field.set(manager, RecipeMap.create(registry));
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError("Could not replace the server recipe map for the reload regression", exception);
         }

@@ -1,13 +1,14 @@
 package com.breakinblocks.justenoughcraftingtables.menu;
 
+import com.breakinblocks.justenoughcraftingtables.platform.Platform;
 import net.minecraft.core.NonNullList;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
-import com.breakinblocks.justenoughcraftingtables.platform.Platform;
 
 public class StationResultSlot extends ResultSlot {
     private final StationMenu menu;
@@ -72,7 +73,7 @@ public class StationResultSlot extends ResultSlot {
                         grid.setItem(slot, remainder);
                         menu.gridOrigins().append(slot, remainder, consumedOrigin, added);
                     } else if (!player.getInventory().add(remainder)) {
-                        player.drop(remainder, false);
+                        player.drop(remainder, false, Prediction.SERVER_ONLY);
                     }
                 }
             }

@@ -31,7 +31,7 @@ public class JustEnoughCraftingTables {
         ModBlockEntities.BLOCK_ENTITIES.register(eventBus);
         ModMenus.MENUS.register(eventBus);
         ModRecipeSerializers.SERIALIZERS.register(eventBus);
-        container.registerConfig(ModConfig.Type.SERVER, JustEnoughCraftingTablesConfig.serverSpec);
+        container.registerConfig(ModConfig.Type.SYNCED, JustEnoughCraftingTablesConfig.serverSpec);
         if (dist.isClient()) {
             container.registerConfig(ModConfig.Type.CLIENT, JustEnoughCraftingTablesConfig.clientSpec);
             JustEnoughCraftingTablesClient.init(container);
