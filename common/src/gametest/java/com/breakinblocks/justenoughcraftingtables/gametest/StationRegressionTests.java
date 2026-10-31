@@ -74,6 +74,37 @@ public final class StationRegressionTests {
         helper.succeed();
     }
 
+    public static void externalWindowWritesKeepItems(GameTestHelper helper) {
+        StationBlockEntity station = station(helper);
+        helper.setBlock(STATION.north(), Blocks.CHEST);
+        ChestBlockEntity chest = helper.getBlockEntity(STATION.north(), ChestBlockEntity.class);
+        chest.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        chest.setItem(1, new ItemStack(Items.COBBLESTONE, 30));
+        chest.setItem(2, new ItemStack(Items.DIRT, 12));
+        ServerPlayer player = player(helper);
+        StationMenu menu = new StationMenu(1, player.getInventory(), station);
+        helper.assertTrue(menu.windowSlot(0).getItem().getCount() == 20, "Window setup failed");
+
+        // Clear, shrink, merge, replace and write into an empty virtual slot, as sorters do.
+        menu.windowSlot(0).set(ItemStack.EMPTY);
+        menu.windowSlot(1).set(new ItemStack(Items.COBBLESTONE, 10));
+        menu.windowSlot(0).set(new ItemStack(Items.COBBLESTONE, 50));
+        menu.windowSlot(2).set(new ItemStack(Items.DIAMOND, 12));
+        menu.windowSlot(3).set(new ItemStack(Items.DIRT, 12));
+        menu.windowSlot(0).container.setItem(0, ItemStack.EMPTY);
+        menu.setWindowStack(menu.windowSlot(1), ItemStack.EMPTY);
+        helper.assertTrue(chest.getItem(0).is(Items.COBBLESTONE) && chest.getItem(0).getCount() == 20,
+                "External write changed the first stack");
+        helper.assertTrue(chest.getItem(1).is(Items.COBBLESTONE) && chest.getItem(1).getCount() == 30,
+                "External write changed the second stack");
+        helper.assertTrue(chest.getItem(2).is(Items.DIRT) && chest.getItem(2).getCount() == 12,
+                "External write replaced an item");
+        helper.assertTrue(chest.getItem(3).isEmpty(), "External write created items");
+        helper.assertTrue(player.getInventory().isEmpty() && menu.getCarried().isEmpty(),
+                "External write refunded copied items");
+        finish(helper, player, menu);
+    }
+
     public static void lockedChestIsNotExposed(GameTestHelper helper) {
         StationBlockEntity station = station(helper);
         helper.setBlock(STATION.north(), Blocks.CHEST);

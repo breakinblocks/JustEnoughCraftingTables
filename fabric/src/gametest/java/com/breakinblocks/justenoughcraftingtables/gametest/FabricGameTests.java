@@ -76,6 +76,8 @@ public final class FabricGameTests {
     @GameTest(maxTicks = 200)
     public void fuel_values(GameTestHelper helper) { StationGameTests.fuelValues(helper); }
     @GameTest(maxTicks = 200)
+    public void externalWindowWritesKeepItems(GameTestHelper helper) { StationRegressionTests.externalWindowWritesKeepItems(helper); }
+    @GameTest(maxTicks = 200)
     public void locked_chest_is_not_exposed(GameTestHelper helper) { StationRegressionTests.lockedChestIsNotExposed(helper); }
     @GameTest(maxTicks = 200)
     public void spectator_leaves_loot_ungenerated(GameTestHelper helper) { StationRegressionTests.spectatorLeavesLootUngenerated(helper); }
