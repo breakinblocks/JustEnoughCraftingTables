@@ -405,6 +405,11 @@ public class StationMenu extends AbstractContainerMenu {
             clientWindow.setStack(slot.position(), stack);
             return;
         }
+        // Only menu clicks own the items being written (including vanilla drag placement).
+        // External setters, such as inventory sorters, only hold copies of these virtual slots.
+        if (!inClick) {
+            return;
+        }
         ItemStorage handler = windowHandler();
         int real = windowIndex(slot.position());
         if (handler == null || real < 0) {
