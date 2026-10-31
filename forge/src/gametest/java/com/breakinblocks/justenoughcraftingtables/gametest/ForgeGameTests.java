@@ -63,6 +63,8 @@ public final class ForgeGameTests {
     @GameTest(template = "empty")
     public static void fuelValues(GameTestHelper helper) { StationGameTests.fuelValues(helper); }
     @GameTest(template = "empty")
+    public static void externalWindowWritesKeepItems(GameTestHelper helper) { StationRegressionTests.externalWindowWritesKeepItems(helper); }
+    @GameTest(template = "empty")
     public static void lockedChestIsNotExposed(GameTestHelper helper) { StationRegressionTests.lockedChestIsNotExposed(helper); }
     @GameTest(template = "empty")
     public static void spectatorLeavesLootUngenerated(GameTestHelper helper) { StationRegressionTests.spectatorLeavesLootUngenerated(helper); }

@@ -66,6 +66,8 @@ public final class FabricGameTests implements FabricGameTest {
     @GameTest(template = "justenoughcraftingtables:empty")
     public void fuelValues(GameTestHelper helper) { StationGameTests.fuelValues(helper); }
     @GameTest(template = "justenoughcraftingtables:empty")
+    public void externalWindowWritesKeepItems(GameTestHelper helper) { StationRegressionTests.externalWindowWritesKeepItems(helper); }
+    @GameTest(template = "justenoughcraftingtables:empty")
     public void lockedChestIsNotExposed(GameTestHelper helper) { StationRegressionTests.lockedChestIsNotExposed(helper); }
     @GameTest(template = "justenoughcraftingtables:empty")
     public void spectatorLeavesLootUngenerated(GameTestHelper helper) { StationRegressionTests.spectatorLeavesLootUngenerated(helper); }
