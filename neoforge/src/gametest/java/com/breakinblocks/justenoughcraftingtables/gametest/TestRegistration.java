@@ -33,6 +33,7 @@ public final class TestRegistration {
             registry.register(JustEnoughCraftingTables.id("slab_of_other_colour_places_in_next_block"), StationGameTests::slabOfOtherColourPlacesInNextBlock);
             registry.register(JustEnoughCraftingTables.id("view_rebuilds_are_coalesced"), StationGameTests::viewRebuildsAreCoalesced);
             registry.register(JustEnoughCraftingTables.id("fuel_values"), StationGameTests::fuelValues);
+            registry.register(JustEnoughCraftingTables.id("external_window_writes_keep_items"), StationRegressionTests::externalWindowWritesKeepItems);
             registry.register(JustEnoughCraftingTables.id("locked_chest_is_not_exposed"), StationRegressionTests::lockedChestIsNotExposed);
             registry.register(JustEnoughCraftingTables.id("spectator_leaves_loot_ungenerated"), StationRegressionTests::spectatorLeavesLootUngenerated);
             registry.register(JustEnoughCraftingTables.id("removed_recipe_cannot_be_crafted"), StationRegressionTests::removedRecipeCannotBeCrafted);
