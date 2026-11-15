@@ -100,6 +100,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
     private boolean filterStale;
     private boolean searchPartial;
     private int badgeSummaryRevision = -1;
+    private String badgeQuery = "";
     private int staleSummaryRevision = -1;
 
     public StationScreen(StationMenu menu, Inventory playerInventory, Component title) {
@@ -431,8 +432,9 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
             badgeIds = null;
             return;
         }
-        if (badgeIds == null || badgeSummaryRevision != summary().revision()) {
+        if (badgeIds == null || badgeSummaryRevision != summary().revision() || !badgeQuery.equals(query)) {
             badgeSummaryRevision = summary().revision();
+            badgeQuery = query;
             badgeIds = summary().matching(SearchQuery.parse(query));
         }
     }
