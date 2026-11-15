@@ -99,6 +99,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
     private boolean filterStale;
     private boolean searchPartial;
     private int badgeSummaryRevision = -1;
+    private String badgeQuery = "";
     private int staleSummaryRevision = -1;
 
     public StationScreen(StationMenu menu, Inventory playerInventory, Component title) {
@@ -430,8 +431,9 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
             badgeIds = null;
             return;
         }
-        if (badgeIds == null || badgeSummaryRevision != summary().revision()) {
+        if (badgeIds == null || badgeSummaryRevision != summary().revision() || !badgeQuery.equals(query)) {
             badgeSummaryRevision = summary().revision();
+            badgeQuery = query;
             badgeIds = summary().matching(SearchQuery.parse(query));
         }
     }
@@ -608,6 +610,12 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> implemen
         if (button == 0 && scrollbarShown() && inTrack(mouseX, mouseY)) {
             draggingScroll = true;
             scrollTo(mouseY);
+            return true;
+        }
+        if (button == 1 && search != null && search.visible && search.isMouseOver(mouseX, mouseY)) {
+            search.setValue("");
+            setFocused(search);
+            search.setFocused(true);
             return true;
         }
         if (search != null && search.visible && !search.isMouseOver(mouseX, mouseY) && search.isFocused()) {
