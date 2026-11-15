@@ -613,6 +613,12 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
             scrollTo(mouseY);
             return true;
         }
+        if (button == 1 && search != null && search.visible && search.isMouseOver(mouseX, mouseY)) {
+            search.setValue("");
+            setFocused(search);
+            search.setFocused(true);
+            return true;
+        }
         if (search != null && search.visible && !search.isMouseOver(mouseX, mouseY) && search.isFocused()) {
             search.setFocused(false);
         }
