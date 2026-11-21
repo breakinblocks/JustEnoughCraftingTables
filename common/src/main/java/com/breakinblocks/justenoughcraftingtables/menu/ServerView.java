@@ -84,11 +84,20 @@ public final class ServerView {
         return Math.min(rounded, maxFirst(pageLength));
     }
 
+    public static int span(int length, int pageSize, int page) {
+        return (int) Math.max(0L, length - (long) page * pageSize);
+    }
+
+    public static int clampStart(int value, int span) {
+        int rounded = Math.max(0, value) / 6 * 6;
+        return Math.min(rounded, Math.max(0, (span + 5) / 6 - 1) * 6);
+    }
+
     public void setPosition(int slotCount, int requestedPage, int requestedFirst) {
         int length = length(slotCount);
         int pages = pages(length, pageSize);
         page = Math.max(0, Math.min(pages - 1, requestedPage));
-        first = clampFirst(requestedFirst, pageLength(length, pageSize, page));
+        first = clampStart(requestedFirst, span(length, pageSize, page));
     }
 
     public int realIndex(int position, int slotCount) {
@@ -97,8 +106,7 @@ public final class ServerView {
         }
         int length = length(slotCount);
         int start = page * pageSize;
-        int pageLength = pageLength(length, pageSize, page);
-        if (first + position >= pageLength) {
+        if (first + position >= span(length, pageSize, page)) {
             return -1;
         }
         int index = start + first + position;

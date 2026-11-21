@@ -129,4 +129,6 @@ public class FabricGameTests implements FabricGameTest {
     public void largeFilterHonorsScanBudget(GameTestHelper helper) { ViewScanGameTests.largeFilterHonorsScanBudget(helper); }
     @GameTest(template = "justenoughcraftingtables:empty")
     public void summaryCodecPreservesAvailabilityAndRetirements(GameTestHelper helper) { ViewScanGameTests.summaryCodecPreservesAvailabilityAndRetirements(helper); }
+    @GameTest(template = "justenoughcraftingtables:empty")
+    public void windowCrossesPageBoundary(GameTestHelper helper) { ViewScanGameTests.windowCrossesPageBoundary(helper); }
 }

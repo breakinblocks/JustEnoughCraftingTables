@@ -64,6 +64,7 @@ public final class JustEnoughCraftingTablesConfig {
     public static class ClientConfig {
         public final ModConfigSpec.BooleanValue renderGridItems;
         public final ModConfigSpec.BooleanValue wheelScrollWholePanel;
+        public final ModConfigSpec.EnumValue<ViewMode> viewMode;
         public final ModConfigSpec.EnumValue<SourceOrder> fillSourceOrder;
         public final ModConfigSpec.BooleanValue repeatCraft;
         public final ModConfigSpec.EnumValue<PanelSide> panelSide;
@@ -90,6 +91,8 @@ public final class JustEnoughCraftingTablesConfig {
                     .defineEnum("panelSide", PanelSide.LEFT);
             wheelScrollWholePanel = builder.translation("justenoughcraftingtables.configuration.wheelScrollWholePanel")
                     .define("wheelScrollWholePanel", true);
+            viewMode = builder.translation("justenoughcraftingtables.configuration.viewMode")
+                    .defineEnum("viewMode", ViewMode.SCROLL);
             builder.pop();
             builder.push("buttons");
             buttonsX = builder.translation("justenoughcraftingtables.configuration.buttonsX")

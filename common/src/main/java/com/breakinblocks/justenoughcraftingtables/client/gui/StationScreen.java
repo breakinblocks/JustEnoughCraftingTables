@@ -4,6 +4,7 @@ import com.breakinblocks.justenoughcraftingtables.JustEnoughCraftingTables;
 import com.breakinblocks.justenoughcraftingtables.config.ButtonsLayout;
 import com.breakinblocks.justenoughcraftingtables.config.JustEnoughCraftingTablesConfig;
 import com.breakinblocks.justenoughcraftingtables.config.PanelSide;
+import com.breakinblocks.justenoughcraftingtables.config.ViewMode;
 import com.breakinblocks.justenoughcraftingtables.menu.ClientSummary;
 import com.breakinblocks.justenoughcraftingtables.menu.ClientWindow;
 import com.breakinblocks.justenoughcraftingtables.menu.ServerView;
@@ -14,6 +15,7 @@ import com.breakinblocks.justenoughcraftingtables.menu.WindowSlot;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
@@ -48,6 +50,9 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
     private static final IconButton.Sprites REPEAT_ON = sprites("repeat_on", false);
     private static final IconButton.Sprites PAGE_PREV = sprites("page_prev", true);
     private static final IconButton.Sprites PAGE_NEXT = sprites("page_next", true);
+    private static final IconButton.Sprites VIEW_SCROLL = sprites("view_scroll", false);
+    private static final IconButton.Sprites VIEW_PAGES = sprites("view_pages", false);
+    private static final IconButton.Sprites VIEW_BOTH = sprites("view_both", false);
 
     public static final int PANEL_WIDTH = 131;
     public static final int PANEL_HEIGHT = 183;
@@ -84,6 +89,9 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
 
     @Nullable
     private PageLabel pageLabel;
+
+    @Nullable
+    private IconButton viewButton;
 
     private boolean opened;
     private boolean draggingScroll;
@@ -165,12 +173,82 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         return ServerView.pages(window().displayLength(), menu.pageSize());
     }
 
+    private ViewMode viewMode() {
+        return JustEnoughCraftingTablesConfig.CLIENT.viewMode.get();
+    }
+
+    private int displayOffset() {
+        return window().displayPage() * menu.pageSize() + window().displayFirst();
+    }
+
+    private int scrollLength() {
+        return viewMode() == ViewMode.BOTH ? displayPageLength() : window().displayLength();
+    }
+
+    private int scrollFirst() {
+        return viewMode() == ViewMode.BOTH ? window().displayFirst() : displayOffset();
+    }
+
+    private int pageIndex() {
+        return viewMode() == ViewMode.PAGES ? displayOffset() / ClientWindow.SIZE : window().displayPage();
+    }
+
+    private int pageCount() {
+        return viewMode() == ViewMode.PAGES ? ServerView.pages(window().displayLength(), ClientWindow.SIZE) : displayPages();
+    }
+
     private boolean scrollbarShown() {
-        return panelShown() && window().displaySide() != null && displayPageLength() > ClientWindow.SIZE;
+        return panelShown() && window().displaySide() != null && viewMode() != ViewMode.PAGES && scrollLength() > ClientWindow.SIZE;
     }
 
     private boolean pagesShown() {
-        return footerShown() && window().displaySide() != null && displayPages() > 1;
+        return footerShown() && window().displaySide() != null && viewMode() != ViewMode.SCROLL && pageCount() > 1;
+    }
+
+    private boolean viewButtonShown() {
+        Direction side = window().displaySide();
+        SideEntry entry = side == null ? null : menu.sideEntry(side);
+        return panelShown() && entry != null && !entry.hidden() && entry.slots() > ClientWindow.SIZE;
+    }
+
+    private int[] normalised(int page, int first) {
+        int length = window().displayLength();
+        int pageSize = menu.pageSize();
+        long offset = Math.max(0L, (long) page * pageSize + first);
+        return switch (viewMode()) {
+            case SCROLL -> new int[] {0, ServerView.clampFirst((int) Math.min(offset, length), length)};
+            case PAGES -> {
+                int last = Math.max(0, ServerView.pages(length, ClientWindow.SIZE) - 1);
+                yield new int[] {0, (int) Math.min(offset / ClientWindow.SIZE, last) * ClientWindow.SIZE};
+            }
+            case BOTH -> {
+                int target = Mth.clamp((int) (offset / pageSize), 0, ServerView.pages(length, pageSize) - 1);
+                int within = (int) Math.min(offset - (long) target * pageSize, pageSize);
+                yield new int[] {target, ServerView.clampFirst(within, ServerView.pageLength(length, pageSize, target))};
+            }
+        };
+    }
+
+    private void toggleViewMode() {
+        JustEnoughCraftingTablesConfig.CLIENT.viewMode.set(viewMode().next());
+        JustEnoughCraftingTablesConfig.CLIENT.viewMode.save();
+        normaliseView();
+    }
+
+    private void normaliseView() {
+        Direction side = window().displaySide();
+        if (side == null || window().pending()) {
+            return;
+        }
+        int[] position = normalised(window().displayPage(), window().displayFirst());
+        if (position[0] != window().displayPage() || position[1] != window().displayFirst()) {
+            request(side, position[0], position[1], false);
+        }
+    }
+
+    private void requestRemembered(Direction side, boolean rebuild) {
+        int[] position = normalised(memory.page(side), memory.first(side));
+        request(side, position[0], position[1], rebuild);
     }
 
     private boolean anySideVisible() {
@@ -226,6 +304,14 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         nextButton = addRenderableWidget(new IconButton(0, 0, () -> PAGE_NEXT,
                 () -> Component.translatable("justenoughcraftingtables.narration.next_page"), () -> changePage(1)));
         pageLabel = addRenderableWidget(new PageLabel(0, 0));
+        viewButton = addRenderableWidget(new IconButton(0, 0,
+                () -> switch (viewMode()) {
+                    case SCROLL -> VIEW_SCROLL;
+                    case PAGES -> VIEW_PAGES;
+                    case BOTH -> VIEW_BOTH;
+                },
+                () -> Component.translatable("justenoughcraftingtables.button.view." + viewMode().name().toLowerCase(Locale.ROOT)),
+                this::toggleViewMode));
         if (!opened) {
             opened = true;
             onFirstOpen();
@@ -247,7 +333,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         }
         Direction side = window().displaySide();
         if (side != null && (memory.page(side) != 0 || memory.first(side) != 0 || filterIds != null)) {
-            request(side, memory.page(side), memory.first(side), true);
+            requestRemembered(side, true);
         }
     }
 
@@ -357,8 +443,8 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
                 search.setFocused(false);
             }
         }
-        int page = window().displayPage();
-        int pageCount = displayPages();
+        int page = pageIndex();
+        int pageCount = pageCount();
         if (prevButton != null) {
             prevButton.visible = pages;
             prevButton.active = page > 0;
@@ -378,6 +464,12 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
             pageLabel.setX(leftPos + px + 83);
             pageLabel.setY(topPos + FOOTER_Y);
             pageLabel.update(page, pageCount);
+        }
+        if (viewButton != null) {
+            viewButton.visible = viewButtonShown();
+            viewButton.setX(leftPos + px + 114);
+            viewButton.setY(topPos + 3);
+            viewButton.refreshLabel();
         }
     }
 
@@ -490,6 +582,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         if (!window.pending() && window.side() != null) {
             memory.remember(window.side(), window.page(), window.first());
         }
+        normaliseView();
     }
 
     @Override
@@ -498,7 +591,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         if (entry == null || entry.hidden() || direction == window().displaySide()) {
             return;
         }
-        request(direction, memory.page(direction), memory.first(direction), true);
+        requestRemembered(direction, true);
     }
 
     @Override
@@ -506,17 +599,21 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         pressButton(StationMenu.BUTTON_HIDE_FIRST + direction.get3DDataValue());
     }
 
-    private void scrollRows(int delta) {
+    private void scrollToFirst(int first) {
         Direction side = window().displaySide();
-        if (side == null) {
+        if (side == null || first == scrollFirst()) {
             return;
         }
-        int pageLength = displayPageLength();
-        int current = window().displayFirst();
-        int next = ServerView.clampFirst(current + delta * 6, pageLength);
-        if (next != current) {
-            request(side, window().displayPage(), next, false);
+        if (viewMode() == ViewMode.BOTH) {
+            request(side, window().displayPage(), first, false);
+        } else {
+            request(side, 0, first, false);
         }
+    }
+
+    private void scrollRows(int delta) {
+        long target = (long) scrollFirst() + delta * 6L;
+        scrollToFirst(ServerView.clampFirst((int) Mth.clamp(target, 0L, Integer.MAX_VALUE), scrollLength()));
     }
 
     private void setPage(int page) {
@@ -524,29 +621,45 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         if (side == null) {
             return;
         }
-        int clamped = Mth.clamp(page, 0, displayPages() - 1);
-        if (clamped != window().displayPage()) {
+        int clamped = Mth.clamp(page, 0, pageCount() - 1);
+        if (clamped == pageIndex()) {
+            return;
+        }
+        if (viewMode() == ViewMode.PAGES) {
+            request(side, 0, clamped * ClientWindow.SIZE, false);
+        } else {
             request(side, clamped, 0, false);
         }
     }
 
     private void changePage(int delta) {
-        setPage(window().displayPage() + delta);
+        if (viewMode() == ViewMode.SCROLL) {
+            scrollRows(delta * ClientWindow.SIZE / 6);
+        } else {
+            setPage(pageIndex() + delta);
+        }
+    }
+
+    private void toStart() {
+        if (viewMode() == ViewMode.SCROLL) {
+            scrollToFirst(0);
+        } else {
+            setPage(0);
+        }
+    }
+
+    private void toEnd() {
+        if (viewMode() == ViewMode.SCROLL) {
+            scrollToFirst(ServerView.maxFirst(scrollLength()));
+        } else {
+            setPage(pageCount() - 1);
+        }
     }
 
     private void scrollTo(double mouseY) {
-        Direction side = window().displaySide();
-        if (side == null) {
-            return;
-        }
-        int maxFirst = ServerView.maxFirst(displayPageLength());
-        int maxRow = maxFirst / 6;
+        int maxRow = ServerView.maxFirst(scrollLength()) / 6;
         float fraction = Mth.clamp((float) ((mouseY - topPos - 24.5) / 145.0), 0.0F, 1.0F);
-        int row = Math.round(fraction * maxRow);
-        int first = row * 6;
-        if (first != window().displayFirst()) {
-            request(side, window().displayPage(), first, false);
-        }
+        scrollToFirst(Math.round(fraction * maxRow) * 6);
     }
 
     private boolean inTrack(double mouseX, double mouseY) {
@@ -654,6 +767,10 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
                 scrollRows(scrollY > 0 ? -1 : 1);
                 return true;
             }
+            if (viewMode() == ViewMode.PAGES && pageCount() > 1 && overWheelArea(mouseX, mouseY)) {
+                changePage(scrollY > 0 ? -1 : 1);
+                return true;
+            }
         }
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
@@ -707,11 +824,11 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
                     return true;
                 }
                 case GLFW.GLFW_KEY_HOME -> {
-                    setPage(0);
+                    toStart();
                     return true;
                 }
                 case GLFW.GLFW_KEY_END -> {
-                    setPage(displayPages() - 1);
+                    toEnd();
                     return true;
                 }
                 default -> {
@@ -774,8 +891,8 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         }
         if (scrollbar) {
             guiGraphics.blitSprite(SCROLLBAR_TRACK, px + 113, topPos + 16, 14, 162);
-            int maxFirst = ServerView.maxFirst(displayPageLength());
-            float fraction = maxFirst == 0 ? 0.0F : (float) window.displayFirst() / maxFirst;
+            int maxFirst = ServerView.maxFirst(scrollLength());
+            float fraction = maxFirst == 0 ? 0.0F : Mth.clamp((float) scrollFirst() / maxFirst, 0.0F, 1.0F);
             guiGraphics.blitSprite(SCROLLER, px + 114, topPos + 17 + Mth.floor(145 * fraction), 12, 15);
         }
         if (window.pending()) {
@@ -804,7 +921,7 @@ public class StationScreen extends StationScreenBase implements SideTabButton.Ow
         Direction side = window().displaySide();
         SideEntry entry = side == null ? null : menu.sideEntry(side);
         if (entry != null) {
-            String name = font.plainSubstrByWidth(entry.name().getString(), 122);
+            String name = font.plainSubstrByWidth(entry.name().getString(), viewButtonShown() ? 104 : 122);
             guiGraphics.drawString(font, name, panelX() + 8, 6, 0x404040, false);
         }
     }

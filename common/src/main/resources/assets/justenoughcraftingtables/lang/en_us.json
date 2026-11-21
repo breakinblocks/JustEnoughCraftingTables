@@ -10,6 +10,9 @@
   "justenoughcraftingtables.button.order.connected": "Fill from: connected inventories first",
   "justenoughcraftingtables.button.repeat.off": "Repeat craft from storage: off",
   "justenoughcraftingtables.button.repeat.on": "Repeat craft from storage: on",
+  "justenoughcraftingtables.button.view.scroll": "Panel view: scrolling",
+  "justenoughcraftingtables.button.view.pages": "Panel view: pages",
+  "justenoughcraftingtables.button.view.both": "Panel view: pages and scrolling",
 
   "justenoughcraftingtables.store.nowhere": "%s items had nowhere to go",
   "justenoughcraftingtables.fill.not_enough": "Not enough ingredients",
@@ -79,6 +82,8 @@
   "justenoughcraftingtables.configuration.panelSide.tooltip": "Which side of the crafting screen the connected inventory panel sits on.",
   "justenoughcraftingtables.configuration.wheelScrollWholePanel": "Wheel Scrolls Whole Panel",
   "justenoughcraftingtables.configuration.wheelScrollWholePanel.tooltip": "When on, the mouse wheel scrolls the panel anywhere over it. When off, only over the scrollbar strip.",
+  "justenoughcraftingtables.configuration.viewMode": "Panel View",
+  "justenoughcraftingtables.configuration.viewMode.tooltip": "How the panel moves through inventories with more than 54 slots. SCROLL uses one scrollbar for the whole inventory. PAGES shows one screen of 54 slots per page. BOTH splits the inventory into pages of the server's page size with a scrollbar inside each page. The button at the top right of the panel cycles this.",
   "justenoughcraftingtables.configuration.buttonsX": "Buttons X",
   "justenoughcraftingtables.configuration.buttonsX.tooltip": "Horizontal position of the first button, in pixels from the left edge of the crafting screen. Negative values and values past the right edge place the buttons outside it.",
   "justenoughcraftingtables.configuration.buttonsY": "Buttons Y",

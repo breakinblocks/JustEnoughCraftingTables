@@ -103,4 +103,6 @@ public class NeoforgeGameTests {
     public static void largeFilterHonorsScanBudget(GameTestHelper helper) { ViewScanGameTests.largeFilterHonorsScanBudget(helper); }
     @GameTest(template = "empty")
     public static void summaryCodecPreservesAvailabilityAndRetirements(GameTestHelper helper) { ViewScanGameTests.summaryCodecPreservesAvailabilityAndRetirements(helper); }
+    @GameTest(template = "empty")
+    public static void windowCrossesPageBoundary(GameTestHelper helper) { ViewScanGameTests.windowCrossesPageBoundary(helper); }
 }

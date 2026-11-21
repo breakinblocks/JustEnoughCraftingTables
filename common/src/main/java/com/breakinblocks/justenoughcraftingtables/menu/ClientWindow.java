@@ -172,8 +172,7 @@ public final class ClientWindow {
         if (predictedSide == null || predictedFiltered) {
             return ItemStack.EMPTY;
         }
-        int pageLength = ServerView.pageLength(predictedLength, pageSize, predictedPage);
-        if (predictedFirst + position >= pageLength) {
+        if (predictedFirst + position >= ServerView.span(predictedLength, pageSize, predictedPage)) {
             return ItemStack.EMPTY;
         }
         int index = predictedPage * pageSize + predictedFirst + position;
@@ -191,8 +190,7 @@ public final class ClientWindow {
         if (predictedFiltered) {
             return false;
         }
-        int pageLength = ServerView.pageLength(predictedLength, pageSize, predictedPage);
-        return predictedFirst + position < pageLength;
+        return predictedFirst + position < ServerView.span(predictedLength, pageSize, predictedPage);
     }
 
     public int beginRequest(ViewPayload.Request request, int predictedLength) {

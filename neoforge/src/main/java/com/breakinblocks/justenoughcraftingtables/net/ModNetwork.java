@@ -18,7 +18,7 @@ public final class ModNetwork {
 
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar(JustEnoughCraftingTables.MOD_ID).versioned("2");
+        PayloadRegistrar registrar = event.registrar(JustEnoughCraftingTables.MOD_ID).versioned("3");
         registrar.playToServer(ViewPayload.TYPE, ViewPayload.STREAM_CODEC, ModNetwork::handleView);
         registrar.playToServer(FillRecipePayload.TYPE, FillRecipePayload.STREAM_CODEC, ModNetwork::handleFill);
         registrar.playToClient(SidesPayload.TYPE, SidesPayload.STREAM_CODEC, ModNetwork::handleSides);

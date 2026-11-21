@@ -7,6 +7,7 @@ import com.breakinblocks.justenoughcraftingtables.net.SummaryPayload;
 import io.netty.buffer.Unpooled;
 import java.util.Arrays;
 import java.util.List;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -53,6 +54,22 @@ public final class ViewScanGameTests {
         } finally {
             buffer.release();
         }
+        helper.succeed();
+    }
+
+    public static void windowCrossesPageBoundary(GameTestHelper helper) {
+        ServerView view = new ServerView(540);
+        view.bind(Direction.NORTH);
+        view.setUnfiltered();
+        view.setPosition(1000, 0, 510);
+        helper.assertValueEqual(view.first(), 510, "Window start was clamped to the server page");
+        helper.assertValueEqual(view.realIndex(53, 1000), 563, "Window did not continue into the next page");
+        view.setPosition(1000, 0, 2000);
+        helper.assertValueEqual(view.first(), 996, "Window start was not clamped to the last row");
+        helper.assertValueEqual(view.realIndex(3, 1000), 999, "Last slot is not reachable");
+        helper.assertValueEqual(view.realIndex(4, 1000), -1, "Window reached past the inventory");
+        view.setPosition(1000, 1, 54);
+        helper.assertValueEqual(view.realIndex(0, 1000), 594, "Page start offset was lost");
         helper.succeed();
     }
 }

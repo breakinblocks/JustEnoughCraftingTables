@@ -1459,7 +1459,7 @@ public class StationMenu extends AbstractContainerMenu {
         if (side != null && filter == null) {
             int pages = ServerView.pages(predictedLength, pageSize);
             page = Math.max(0, Math.min(pages - 1, page));
-            first = ServerView.clampFirst(first, ServerView.pageLength(predictedLength, pageSize, page));
+            first = ServerView.clampStart(first, ServerView.span(predictedLength, pageSize, page));
         }
         ViewPayload.Request request = new ViewPayload.Request(
                 Optional.ofNullable(side), Math.max(0, page), Math.max(0, first), Optional.ofNullable(filter), rebuild);
